@@ -4,6 +4,10 @@ set(CORE_SOURCES
     App.cpp
     Input.cpp
     Graphics/Graphics.cpp
+    System/SystemManager.cpp
+    System/WindowSystem.cpp
+    System/GraphicsSystem.cpp
+    System/InputSystem.cpp
 )
 
 # Platform-specific window and input sources
@@ -12,10 +16,12 @@ if(EMSCRIPTEN)
     list(APPEND CORE_SOURCES
         Platform/PlatformWeb.cpp
     )
+    # WebGL doesn't use LLGLSurfaceAdapter - LLGL manages canvas directly
 elseif(WIN32)
     list(APPEND CORE_SOURCES
         Window/WindowWindows.cpp
         Input/InputWindows.cpp
+        Graphics/LLGLSurfaceAdapter.cpp
     )
 elseif(APPLE)
     if(IOS)

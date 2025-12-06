@@ -1,15 +1,19 @@
 #pragma once
 
 #include "ToyFrameV/Graphics.h"
-#include <string>
-#include <memory>
-#include <functional>
+#include "ToyFrameV/System.h"
 #include <chrono>
+#include <functional>
+#include <memory>
+#include <string>
 
 namespace ToyFrameV {
 
 // Forward declarations
 class Window;
+class WindowSystem;
+class GraphicsSystem;
+class InputSystem;
 struct InputEvent;
 
 /**
@@ -103,18 +107,33 @@ protected:
     /**
      * @brief Get the graphics context
      */
-    Graphics* GetGraphics() const { return m_graphics.get(); }
+    Graphics *GetGraphics() const;
 
-public:
-    /**
-     * @brief Execute one frame (used internally and by Emscripten)
-     */
-    void RunOneFrame();
+  public:
+  /**
+   * @brief Get a system by type
+   * @tparam T System type to find
+   * @return Pointer to the system, or nullptr if not found
+   */
+  template <typename T> T *GetSystem() const {
+    return m_systems.GetSystem<T>();
+  }
+
+  /**
+   * @brief Get the system manager
+   */
+  SystemManager &GetSystemManager() { return m_systems; }
+  const SystemManager &GetSystemManager() const { return m_systems; }
+
+  /**
+   * @brief Execute one frame (used internally and by Emscripten)
+   */
+  void RunOneFrame();
 
 protected:
     AppConfig m_config;
     bool m_running = false;
-    std::unique_ptr<Graphics> m_graphics;
+    SystemManager m_systems;
     std::chrono::high_resolution_clock::time_point m_lastFrameTime;
 };
 

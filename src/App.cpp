@@ -1,6 +1,9 @@
 #include "ToyFrameV/App.h"
 #include "ToyFrameV/Graphics.h"
+#include "ToyFrameV/GraphicsSystem.h"
 #include "ToyFrameV/Input.h"
+#include "ToyFrameV/InputSystem.h"
+#include "ToyFrameV/WindowSystem.h"
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -30,44 +33,84 @@ static void EmscriptenMainLoop() {
 #endif
 
 void App::RunOneFrame() {
-    if (!m_running || !m_graphics->ProcessEvents()) {
-        m_running = false;
+  if (!m_running) {
+#ifdef __EMSCRIPTEN__
+    emscripten_cancel_main_loop();
+#endif
+    return;
+  }
+
+  // Pre-update all systems (process events, save previous input state)
+  m_systems.PreUpdateAll();
+
+  // Check if window requested close
+  auto *windowSystem = GetSystem<WindowSystem>();
+  if (windowSystem && windowSystem->IsCloseRequested()) {
+    m_running = false;
+#ifdef __EMSCRIPTEN__
+    emscripten_cancel_main_loop();
+#endif
+    return;
+  }
+
+  // Check if graphics is still valid
+  auto *graphicsSystem = GetSystem<GraphicsSystem>();
+  if (graphicsSystem && !graphicsSystem->IsValid()) {
+    m_running = false;
 #ifdef __EMSCRIPTEN__
         emscripten_cancel_main_loop();
 #endif
         return;
-    }
+  }
 
     // Calculate delta time
     auto currentTime = std::chrono::high_resolution_clock::now();
     float deltaTime = std::chrono::duration<float>(currentTime - m_lastFrameTime).count();
     m_lastFrameTime = currentTime;
 
+    // Update all systems
+    m_systems.UpdateAll(deltaTime);
+
     // User update
     OnUpdate(deltaTime);
 
-    // Begin frame
-    m_graphics->BeginFrame();
+    // Render phase - systems BeginFrame
+    m_systems.RenderAll();
 
     // User render
     OnRender();
 
-    // End frame (present)
-    m_graphics->EndFrame();
+    // Post-update all systems (EndFrame/Present, reset deltas)
+    m_systems.PostUpdateAll();
 }
 
 int App::Run() {
-    // Create graphics context (this also creates the window via LLGL)
-    m_graphics = Graphics::Create(nullptr, m_config.graphics);
-    if (!m_graphics) {
-        std::cerr << "Failed to create graphics context" << std::endl;
-        return -1;
-    }
+  // Register core systems in order
+  // Note: Priority determines actual execution order, but registration
+  // order affects initialization order for systems with same priority
+
+  // WindowSystem - handles window creation and events (Priority: Platform = 0)
+  // Creates the native window that GraphicsSystem will render to
+  m_systems.AddSystem<WindowSystem>();
+
+  // InputSystem - handles input state per frame (Priority: Input = 100)
+  m_systems.AddSystem<InputSystem>();
+
+  // GraphicsSystem - handles rendering (Priority: Present = 1000)
+  // Uses WindowSystem's window for rendering via LLGL
+  m_systems.AddSystem<GraphicsSystem>(m_config.graphics);
+
+  // Initialize all systems
+  if (!m_systems.InitializeAll(this)) {
+    std::cerr << "Failed to initialize systems" << std::endl;
+    m_systems.ShutdownAll();
+    return -1;
+  }
 
     // User initialization
     if (!OnInit()) {
         std::cerr << "Failed to initialize application" << std::endl;
-        m_graphics.reset();
+        m_systems.ShutdownAll();
         return -1;
     }
 
@@ -83,22 +126,27 @@ int App::Run() {
     g_currentApp = nullptr;
 #else
     // Desktop: Traditional while loop
-    while (m_running && m_graphics->ProcessEvents()) {
-        RunOneFrame();
+    while (m_running) {
+      RunOneFrame();
     }
 #endif
 
     // User shutdown
     OnShutdown();
 
-    // Cleanup
-    m_graphics.reset();
+    // Shutdown all systems (reverse order)
+    m_systems.ShutdownAll();
 
     return 0;
 }
 
 void App::Quit() {
     m_running = false;
+}
+
+Graphics *App::GetGraphics() const {
+  auto *graphicsSystem = m_systems.GetSystem<GraphicsSystem>();
+  return graphicsSystem ? graphicsSystem->GetGraphics() : nullptr;
 }
 
 } // namespace ToyFrameV

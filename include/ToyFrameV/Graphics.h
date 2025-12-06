@@ -273,8 +273,15 @@ public:
     /**
      * @brief Process window events (call each frame)
      * @return false if window should close
+     * @note When using an external window, this only checks if the swap chain
+     * is valid. Window events are handled by WindowSystem.
      */
     bool ProcessEvents();
+
+    /**
+     * @brief Check if graphics context is valid and ready for rendering
+     */
+    bool IsValid() const;
 
     // Internal - get implementation
     GraphicsImpl* GetImpl() const { return m_impl.get(); }

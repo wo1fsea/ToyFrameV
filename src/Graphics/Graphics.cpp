@@ -7,6 +7,13 @@
  */
 
 #include "ToyFrameV/Graphics.h"
+
+// LLGLSurfaceAdapter is only used on desktop platforms with native windows
+// WebGL uses LLGL's built-in canvas management
+#if !defined(__EMSCRIPTEN__) && !defined(PLATFORM_WEB)
+#include "LLGLSurfaceAdapter.h"
+#endif
+
 #include <LLGL/LLGL.h>
 #include <LLGL/Utils/TypeNames.h>
 #include <LLGL/Utils/VertexFormat.h>
@@ -77,9 +84,14 @@ public:
     LLGL::SwapChain* swapChain = nullptr;
     LLGL::CommandBuffer* commandBuffer = nullptr;
     LLGL::CommandQueue* commandQueue = nullptr;
-    LLGL::Window* window = nullptr;
+    LLGL::Window *window =
+        nullptr; // Only used when LLGL creates its own window
+    std::shared_ptr<LLGL::Surface>
+        externalSurface;              // Adapter for external ToyFrameV window
+    Window *toyFrameWindow = nullptr; // Reference to external ToyFrameV window
     bool inRenderPass = false;
-    
+    bool ownsWindow = false; // True if LLGL created the window
+
     ~GraphicsImpl() {
         if (renderSystemPtr) {
             LLGL::RenderSystem::Unload(std::move(renderSystemPtr));
@@ -112,6 +124,7 @@ std::unique_ptr<Graphics> Graphics::Create(Window* window, const GraphicsConfig&
 
 bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     m_impl = std::make_unique<GraphicsImpl>();
+    m_impl->toyFrameWindow = window;
 
     // Select backend
     std::string moduleName;
@@ -159,21 +172,47 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     }
     m_impl->renderSystem = m_impl->renderSystemPtr.get();
 
-    // Create swap chain (creates its own window)
+    // Create swap chain
     LLGL::SwapChainDescriptor swapChainDesc;
-    swapChainDesc.resolution = { 800, 600 };  // Default, will be updated
     swapChainDesc.samples = config.samples;
 
+#if defined(__EMSCRIPTEN__) || defined(PLATFORM_WEB)
+    // WebGL: LLGL manages the canvas directly, ignore external window parameter
+    std::cout << "  Using WebGL canvas" << std::endl;
+    swapChainDesc.resolution = {800, 600}; // Will be overridden by canvas size
     m_impl->swapChain = m_impl->renderSystem->CreateSwapChain(swapChainDesc);
-    if (!m_impl->swapChain) {
-        std::cerr << "Failed to create swap chain" << std::endl;
-        return false;
-    }
+    m_impl->ownsWindow = true;
+#else
+    // Desktop platforms: support external window via LLGLSurfaceAdapter
+    if (window) {
+      // Use external ToyFrameV window via adapter
+      std::cout << "  Using external window" << std::endl;
+      m_impl->externalSurface = CreateLLGLSurface(window);
+      swapChainDesc.resolution = {
+          static_cast<std::uint32_t>(window->GetWidth()),
+          static_cast<std::uint32_t>(window->GetHeight())};
+      m_impl->swapChain = m_impl->renderSystem->CreateSwapChain(
+          swapChainDesc, m_impl->externalSurface);
+      m_impl->ownsWindow = false;
+    } else {
+      // Let LLGL create its own window
+      std::cout << "  Creating LLGL window" << std::endl;
+      swapChainDesc.resolution = {800, 600};
+      m_impl->swapChain = m_impl->renderSystem->CreateSwapChain(swapChainDesc);
+      m_impl->ownsWindow = true;
 
-    // Get window from swap chain
-    if (LLGL::IsInstanceOf<LLGL::Window>(m_impl->swapChain->GetSurface())) {
-        m_impl->window = LLGL::CastTo<LLGL::Window>(&m_impl->swapChain->GetSurface());
+      // Get window from swap chain
+      if (LLGL::IsInstanceOf<LLGL::Window>(m_impl->swapChain->GetSurface())) {
+        m_impl->window =
+            LLGL::CastTo<LLGL::Window>(&m_impl->swapChain->GetSurface());
         m_impl->window->Show();
+      }
+    }
+#endif
+
+    if (!m_impl->swapChain) {
+      std::cerr << "Failed to create swap chain" << std::endl;
+      return false;
     }
 
     // Set vsync
@@ -375,7 +414,7 @@ const std::string& Graphics::GetDeviceName() const {
 }
 
 Window* Graphics::GetWindow() const {
-    return nullptr; // Window is managed internally by LLGL
+  return m_impl->toyFrameWindow; // Return external ToyFrameV window if provided
 }
 
 void Graphics::OnResize(int width, int height) {
@@ -385,13 +424,23 @@ void Graphics::OnResize(int width, int height) {
 }
 
 bool Graphics::ProcessEvents() {
+  // When using external window, we don't process LLGL window events
+  // The ToyFrameV WindowSystem handles events for the external window
+  if (m_impl->ownsWindow) {
+    // LLGL owns the window, process its events
     if (!LLGL::Surface::ProcessEvents()) {
-        return false;
+      return false;
     }
     if (m_impl->window && m_impl->window->HasQuit()) {
-        return false;
+      return false;
     }
-    return true;
+  }
+    // When using external window, just check if swap chain is valid
+    return m_impl->swapChain != nullptr;
+}
+
+bool Graphics::IsValid() const {
+  return m_impl && m_impl->swapChain != nullptr;
 }
 
 // ============================================================================

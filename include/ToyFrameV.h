@@ -8,11 +8,18 @@
  * All graphics functionality is abstracted - no LLGL knowledge required.
  */
 
-#include "ToyFrameV/Platform.h"
 #include "ToyFrameV/App.h"
 #include "ToyFrameV/Graphics.h"
 #include "ToyFrameV/Input.h"
 #include "ToyFrameV/KeyCodes.h"
+#include "ToyFrameV/Platform.h"
+#include "ToyFrameV/Window.h"
+
+// System architecture
+#include "ToyFrameV/GraphicsSystem.h"
+#include "ToyFrameV/InputSystem.h"
+#include "ToyFrameV/System.h"
+#include "ToyFrameV/WindowSystem.h"
 
 // Version info
 #define TOYFRAMEV_VERSION_MAJOR 0
