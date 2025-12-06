@@ -17,6 +17,7 @@
 
 // System architecture
 #include "ToyFrameV/GraphicsSystem.h"
+#include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/InputSystem.h"
 #include "ToyFrameV/System.h"
 #include "ToyFrameV/WindowSystem.h"

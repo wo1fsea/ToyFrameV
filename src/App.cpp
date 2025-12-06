@@ -1,6 +1,7 @@
 #include "ToyFrameV/App.h"
 #include "ToyFrameV/Graphics.h"
 #include "ToyFrameV/GraphicsSystem.h"
+#include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/Input.h"
 #include "ToyFrameV/InputSystem.h"
 #include "ToyFrameV/WindowSystem.h"
@@ -92,6 +93,9 @@ int App::Run() {
   // WindowSystem - handles window creation and events (Priority: Platform = 0)
   // Creates the native window that GraphicsSystem will render to
   m_systems.AddSystem<WindowSystem>();
+
+  // IOSystem - handles file I/O operations (Priority: Platform + 10)
+  m_systems.AddSystem<IOSystem>();
 
   // InputSystem - handles input state per frame (Priority: Input = 100)
   m_systems.AddSystem<InputSystem>();

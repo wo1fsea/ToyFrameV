@@ -8,6 +8,7 @@ set(CORE_SOURCES
     System/WindowSystem.cpp
     System/GraphicsSystem.cpp
     System/InputSystem.cpp
+    System/IOSystem.cpp
 )
 
 # Platform-specific window and input sources

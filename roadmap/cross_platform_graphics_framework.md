@@ -33,7 +33,8 @@ ToyFrameV/
 │   ├── System.h                # System base class
 │   ├── WindowSystem.h          # Window subsystem
 │   ├── GraphicsSystem.h        # Graphics subsystem
-│   └── InputSystem.h           # Input subsystem
+│   ├── InputSystem.h           # Input subsystem
+│   └── IOSystem.h              # I/O subsystem (file/network)
 ├── src/
 │   ├── App.cpp                 # App implementation
 │   ├── Input.cpp               # Input core implementation
@@ -44,13 +45,15 @@ ToyFrameV/
 │   │   ├── SystemManager.cpp   # System lifecycle management
 │   │   ├── WindowSystem.cpp
 │   │   ├── GraphicsSystem.cpp
-│   │   └── InputSystem.cpp
+│   │   ├── InputSystem.cpp
+│   │   └── IOSystem.cpp        # I/O system implementation
 │   └── Platform/
 │       ├── Windows/PlatformWindows.cpp
 │       └── Web/PlatformWeb.cpp
 ├── samples/
 │   ├── HelloApp/               # Basic application sample
-│   └── HelloTriangle/          # Triangle rendering sample
+│   ├── HelloTriangle/          # Triangle rendering sample
+│   └── HelloIO/                # I/O system sample
 ├── web/template.html           # Web build template
 └── docs/WebGL_Build.md         # Web build documentation
 ```
@@ -111,6 +114,19 @@ ToyFrameV/
   - [x] `App::GetSystem<T>()` template for system access
   - [x] `App::GetGraphics()` delegates to `GraphicsSystem`
   - [x] Emscripten `emscripten_set_main_loop` compatibility maintained
+
+### ✅ Stage 5.6: I/O System (Completed)
+- [x] **IOBuffer Class**
+  - [x] Zero-copy move semantics with `unique_ptr<uint8_t[]>`
+  - [x] Convenient accessors (`AsString()`, `AsStringView()`)
+  - [x] `ToVector()` for STL compatibility
+- [x] **IOSystem** (`IOSystem.h`, `IOSystem.cpp`)
+  - [x] Unified path scheme (`file://`, `assets://`, `documents://`, `http://`, `https://`)
+  - [x] Platform-specific directories (Assets, Documents, Cache, Temp)
+  - [x] Synchronous API: `ReadFile()`, `WriteFile()`, `Exists()`, `Delete()`
+  - [x] Asynchronous API: `ReadFileAsync()`, `WriteFileAsync()` with callbacks
+  - [x] Network support placeholder for HTTP/HTTPS
+- [x] **HelloIO Sample** - I/O system demonstration
 
 ---
 
@@ -175,6 +191,8 @@ ToyFrameV/
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Priority 0    │ WindowSystem   │ Platform events           │
+├─────────────────────────────────────────────────────────────┤
+│  Priority 10   │ IOSystem       │ File/Network I/O          │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 100  │ InputSystem    │ Input state updates       │
 ├─────────────────────────────────────────────────────────────┤
