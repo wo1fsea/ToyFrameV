@@ -8,21 +8,24 @@
     and is excluded from git.
 
 .EXAMPLE
-    .\build_web.ps1
-    .\build_web.ps1 -Clean
-    .\build_web.ps1 -Serve
+    .\scripts\build_web.ps1
+    .\scripts\build_web.ps1 -Clean
+    .\scripts\build_web.ps1 -Serve
+    .\scripts\build_web.ps1 -Target HelloTriangle
 #>
 
 param(
-    [switch]$Clean,  # Clean build directory before building
-    [switch]$Serve,  # Start a local server after building
-    [switch]$Setup   # Only setup emsdk, don't build
+    [switch]$Clean,       # Clean build directory before building
+    [switch]$Serve,       # Build and start a local server
+    [switch]$Setup,       # Only setup emsdk, don't build
+    [string]$Target = "" # Specific target to build (empty = all)
 )
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$EmsdkDir = Join-Path $ScriptDir "emsdk"
-$BuildDir = Join-Path $ScriptDir "build-web"
+$ProjectDir = Split-Path -Parent $ScriptDir
+$EmsdkDir = Join-Path $ProjectDir "emsdk"
+$BuildDir = Join-Path $ProjectDir "build-web"
 
 function Write-Header {
     param([string]$Text)
@@ -49,8 +52,11 @@ function Write-Info {
 function Setup-Emsdk {
     Write-Header "Setting up Emscripten SDK"
     
+    $emsdkExe = Join-Path $EmsdkDir "emsdk.bat"
+    $emccPath = Join-Path $EmsdkDir "upstream\emscripten\emcc.bat"
+    
     # Check if emsdk already exists
-    if (Test-Path (Join-Path $EmsdkDir "emsdk.bat")) {
+    if (Test-Path $emsdkExe) {
         Write-Step "Emsdk already installed at: $EmsdkDir"
     } else {
         Write-Step "Downloading Emscripten SDK..."
@@ -62,10 +68,13 @@ function Setup-Emsdk {
         }
     }
     
-    Set-Location $EmsdkDir
+    # Check if emcc exists (meaning latest is already installed)
+    if (Test-Path $emccPath) {
+        Write-Step "Emscripten already installed, skipping install/activate"
+        return
+    }
     
-    # Check if latest is already installed
-    $emsdkExe = Join-Path $EmsdkDir "emsdk.bat"
+    Set-Location $EmsdkDir
     
     Write-Step "Installing latest Emscripten..."
     & $emsdkExe install latest
@@ -79,7 +88,7 @@ function Setup-Emsdk {
         throw "Failed to activate emsdk"
     }
     
-    Set-Location $ScriptDir
+    Set-Location $ProjectDir
     Write-Host "Emsdk setup complete!" -ForegroundColor Green
 }
 
@@ -148,12 +157,18 @@ function Build-Web {
     
     # Build
     Write-Step "Building..."
-    cmake --build . --config Release -j 4
+    $numCores = [Environment]::ProcessorCount
+    $buildArgs = @("--build", ".", "--config", "Release", "-j", $numCores)
+    if ($Target -ne "") {
+        $buildArgs += "--target"
+        $buildArgs += $Target
+    }
+    cmake @buildArgs
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed"
     }
     
-    Set-Location $ScriptDir
+    Set-Location $ProjectDir
     
     Write-Header "Build Complete!"
     Write-Host ""
@@ -168,7 +183,7 @@ function Build-Web {
     
     Write-Host ""
     Write-Host "  To test locally:" -ForegroundColor White
-    Write-Host "    .\build_web.ps1 -Serve" -ForegroundColor Yellow
+    Write-Host "    .\scripts\build_web.ps1 -Serve" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -213,6 +228,7 @@ try {
     Activate-Emsdk
     
     if ($Serve) {
+        Build-Web
         Start-Server
     } else {
         Build-Web
@@ -223,5 +239,5 @@ try {
     Write-Host "ERROR: $_" -ForegroundColor Red
     exit 1
 } finally {
-    Set-Location $ScriptDir
+    Set-Location $ProjectDir
 }

@@ -1,45 +1,45 @@
-# ToyFrameV WebGL 构建指南
+# ToyFrameV WebGL Build Guide
 
-ToyFrameV 支持编译为 WebAssembly，在浏览器中通过 WebGL 运行。
+ToyFrameV supports compilation to WebAssembly, running in browsers via WebGL.
 
-## 前提条件
+## Prerequisites
 
-### 安装 Emscripten SDK
+### Install Emscripten SDK
 
 ```bash
-# 克隆 emsdk
+# Clone emsdk
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 
-# 安装最新版本
+# Install latest version
 ./emsdk install latest
 ./emsdk activate latest
 
-# 激活环境变量
+# Activate environment variables
 # Linux/macOS:
 source ./emsdk_env.sh
 # Windows:
 emsdk_env.bat
 ```
 
-## 构建步骤
+## Build Steps
 
 ### Linux/macOS
 
 ```bash
 cd ToyFrameV
-chmod +x build_web.sh
-./build_web.sh
+chmod +x scripts/build_web.sh
+./scripts/build_web.sh
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
 cd ToyFrameV
-.\build_web.ps1
+.\scripts\build_web.ps1
 ```
 
-### 手动构建
+### Manual Build
 
 ```bash
 mkdir build-web
@@ -48,38 +48,38 @@ emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
 emmake make -j4
 ```
 
-## 测试
+## Testing
 
-构建完成后，在 `build-web/bin/` 目录下会生成：
+After building, the following files will be generated in `build-web/bin/`:
 
-- `HelloTriangle.html` - 主 HTML 文件
-- `HelloTriangle.js` - JavaScript 胶水代码
-- `HelloTriangle.wasm` - WebAssembly 模块
+- `HelloTriangle.html` - Main HTML file
+- `HelloTriangle.js` - JavaScript glue code
+- `HelloTriangle.wasm` - WebAssembly module
 
-启动本地服务器测试：
+Start a local server to test:
 
 ```bash
 cd build-web/bin
 python3 -m http.server 8080
 ```
 
-然后在浏览器中打开: http://localhost:8080/HelloTriangle.html
+Then open in browser: http://localhost:8080/HelloTriangle.html
 
-## 浏览器兼容性
+## Browser Compatibility
 
-需要支持 WebGL 2.0 的现代浏览器：
+Requires modern browsers with WebGL 2.0 support:
 
 - Chrome 56+
 - Firefox 51+
 - Safari 15+
 - Edge 79+
 
-## 着色器
+## Shaders
 
-WebGL 使用 GLSL ES 3.0 着色器。HelloTriangle 示例已包含 HLSL 和 GLSL 两种着色器，会根据后端自动选择。
+WebGL uses GLSL ES 3.0 shaders. The HelloTriangle sample includes both HLSL and GLSL shaders, automatically selected based on the backend.
 
 ```cpp
-// 示例：根据后端选择着色器
+// Example: Select shader based on backend
 bool useGLSL = (gfx->GetBackendName().find("OpenGL") != std::string::npos) ||
                (gfx->GetBackendName().find("WebGL") != std::string::npos);
 
@@ -92,8 +92,8 @@ if (useGLSL) {
 }
 ```
 
-## 注意事项
+## Notes
 
-1. WebGL 构建会生成较大的 WASM 文件，首次加载可能需要几秒钟
-2. 确保服务器正确设置 MIME 类型：`application/wasm` 用于 `.wasm` 文件
-3. 部分浏览器可能需要 HTTPS 才能运行 WebAssembly
+1. WebGL builds generate larger WASM files; initial loading may take a few seconds
+2. Ensure the server correctly sets MIME types: `application/wasm` for `.wasm` files
+3. Some browsers may require HTTPS to run WebAssembly

@@ -7,16 +7,18 @@
 # and is excluded from git.
 #
 # Usage:
-#   ./build_web.sh          # Build
-#   ./build_web.sh --clean  # Clean and build
-#   ./build_web.sh --serve  # Build and start server
-#   ./build_web.sh --setup  # Only setup emsdk
+#   ./scripts/build_web.sh              # Build
+#   ./scripts/build_web.sh --clean      # Clean and build
+#   ./scripts/build_web.sh --serve      # Build and start server
+#   ./scripts/build_web.sh --setup      # Only setup emsdk
+#   ./scripts/build_web.sh --target HelloTriangle  # Build specific target
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EMSDK_DIR="$SCRIPT_DIR/emsdk"
-BUILD_DIR="$SCRIPT_DIR/build-web"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+EMSDK_DIR="$PROJECT_DIR/emsdk"
+BUILD_DIR="$PROJECT_DIR/build-web"
 
 # Colors
 RED='\033[0;31m'
@@ -30,12 +32,15 @@ NC='\033[0m' # No Color
 CLEAN=false
 SERVE=false
 SETUP_ONLY=false
+TARGET=""
 
-for arg in "$@"; do
-    case $arg in
-        --clean) CLEAN=true ;;
-        --serve) SERVE=true ;;
-        --setup) SETUP_ONLY=true ;;
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --clean) CLEAN=true; shift ;;
+        --serve) SERVE=true; shift ;;
+        --setup) SETUP_ONLY=true; shift ;;
+        --target) TARGET="$2"; shift 2 ;;
+        *) shift ;;
     esac
 done
 
@@ -65,11 +70,19 @@ print_error() {
 setup_emsdk() {
     print_header "Setting up Emscripten SDK"
     
+    local EMCC_PATH="$EMSDK_DIR/upstream/emscripten/emcc"
+    
     if [ -f "$EMSDK_DIR/emsdk" ]; then
         print_step "Emsdk already installed at: $EMSDK_DIR"
     else
         print_step "Downloading Emscripten SDK..."
         git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+    fi
+    
+    # Check if emcc exists (meaning latest is already installed)
+    if [ -f "$EMCC_PATH" ]; then
+        print_step "Emscripten already installed, skipping install/activate"
+        return
     fi
     
     cd "$EMSDK_DIR"
@@ -80,7 +93,7 @@ setup_emsdk() {
     print_step "Activating Emscripten..."
     ./emsdk activate latest
     
-    cd "$SCRIPT_DIR"
+    cd "$PROJECT_DIR"
     echo -e "${GREEN}Emsdk setup complete!${NC}"
 }
 
@@ -126,9 +139,14 @@ build_web() {
     emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
     
     print_step "Building..."
-    cmake --build . --config Release -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    local NUM_CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    if [ -n "$TARGET" ]; then
+        cmake --build . --config Release -j $NUM_CORES --target "$TARGET"
+    else
+        cmake --build . --config Release -j $NUM_CORES
+    fi
     
-    cd "$SCRIPT_DIR"
+    cd "$PROJECT_DIR"
     
     print_header "Build Complete!"
     echo ""
@@ -142,7 +160,7 @@ build_web() {
     
     echo ""
     echo "  To test locally:"
-    echo -e "    ${YELLOW}./build_web.sh --serve${NC}"
+    echo -e "    ${YELLOW}./scripts/build_web.sh --serve${NC}"
     echo ""
 }
 
