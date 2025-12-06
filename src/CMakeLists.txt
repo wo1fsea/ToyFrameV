@@ -14,36 +14,36 @@ set(CORE_SOURCES
 # Note: EMSCRIPTEN must be checked first as it also defines UNIX
 if(EMSCRIPTEN)
     list(APPEND CORE_SOURCES
-        Platform/PlatformWeb.cpp
+        Platform/Web/PlatformWeb.cpp
     )
     # WebGL doesn't use LLGLSurfaceAdapter - LLGL manages canvas directly
 elseif(WIN32)
     list(APPEND CORE_SOURCES
-        Window/WindowWindows.cpp
-        Input/InputWindows.cpp
+        Platform/Windows/WindowWindows.cpp
+        Platform/Windows/InputWindows.cpp
         Graphics/LLGLSurfaceAdapter.cpp
     )
 elseif(APPLE)
     if(IOS)
         list(APPEND CORE_SOURCES
-            Window/WindowiOS.mm
-            Input/InputiOS.mm
+            Platform/iOS/WindowiOS.mm
+            Platform/iOS/InputiOS.mm
         )
     else()
         list(APPEND CORE_SOURCES
-            Window/WindowMacOS.mm
-            Input/InputMacOS.mm
+            Platform/macOS/WindowMacOS.mm
+            Platform/macOS/InputMacOS.mm
         )
     endif()
 elseif(ANDROID)
     list(APPEND CORE_SOURCES
-        Window/WindowAndroid.cpp
-        Input/InputAndroid.cpp
+        Platform/Android/WindowAndroid.cpp
+        Platform/Android/InputAndroid.cpp
     )
 elseif(UNIX)
     list(APPEND CORE_SOURCES
-        Window/WindowLinux.cpp
-        Input/InputLinux.cpp
+        Platform/Linux/WindowLinux.cpp
+        Platform/Linux/InputLinux.cpp
     )
 endif()
 
