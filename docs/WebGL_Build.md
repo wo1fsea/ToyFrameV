@@ -45,8 +45,10 @@ cd ToyFrameV
 mkdir build-web
 cd build-web
 emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
-emmake make -j4
+cmake --build . --config Release
 ```
+
+Note: On Windows, Emscripten defaults to Ninja as the build system. On Linux/macOS, it may use Make. The `cmake --build` command works with both.
 
 ## Testing
 
