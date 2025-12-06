@@ -1,0 +1,43 @@
+# Build outputs
+build/
+build-web/
+out/
+cmake-build-*/
+
+# Emscripten SDK (auto-downloaded)
+emsdk/
+
+# IDE
+.vs/
+.vscode/settings.json
+*.suo
+*.user
+*.sln.docstates
+
+# Compiled files
+*.obj
+*.o
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!cmake/*.cmake
+
+# Third-party (optional - uncomment if you want to track them)
+# third_party/LLGL/
+# third_party/eigen/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

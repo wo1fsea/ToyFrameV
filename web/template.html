@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToyFrameV - @SAMPLE_NAME@</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a2e;
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .canvas-container {
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        #canvas {
+            display: block;
+            background: #000;
+        }
+        
+        .info {
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 14px;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .loading.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            color: #00d4ff;
+        }
+        
+        .progress {
+            width: 200px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #00d4ff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading ToyFrameV...</div>
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+    
+    <h1>🎮 ToyFrameV - @SAMPLE_NAME@</h1>
+    
+    <div class="canvas-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="info">
+        <p>WebGL 2.0 | ToyFrameV Graphics Framework</p>
+        <p>Press F11 for fullscreen</p>
+    </div>
+
+    <script>
+        var Module = {
+            print: (function() {
+                var element = document.getElementById('output');
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    console.log(text);
+                    if (element) {
+                        element.value += text + "\n";
+                        element.scrollTop = element.scrollHeight;
+                    }
+                };
+            })(),
+            printErr: function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.error(text);
+            },
+            canvas: (function() {
+                var canvas = document.getElementById('canvas');
+                canvas.addEventListener("webglcontextlost", function(e) {
+                    alert('WebGL context lost. You will need to reload the page.');
+                    e.preventDefault();
+                }, false);
+                return canvas;
+            })(),
+            
+            onRuntimeInitialized: function() {
+                document.getElementById('loading').classList.add('hidden');
+            },
+            
+            setStatus: function(text) {
+                if (text) {
+                    var match = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    if (match) {
+                        var progress = (parseInt(match[2]) / parseInt(match[4])) * 100;
+                        document.getElementById('progress-bar').style.width = progress + '%';
+                    }
+                }
+            },
+            
+            totalDependencies: 0,
+            monitorRunDependencies: function(left) {
+                this.totalDependencies = Math.max(this.totalDependencies, left);
+                if (this.totalDependencies > 0) {
+                    var progress = ((this.totalDependencies - left) / this.totalDependencies) * 100;
+                    document.getElementById('progress-bar').style.width = progress + '%';
+                }
+            }
+        };
+        
+        // Handle fullscreen
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                var canvas = document.getElementById('canvas');
+                if (canvas.requestFullscreen) {
+                    canvas.requestFullscreen();
+                } else if (canvas.webkitRequestFullscreen) {
+                    canvas.webkitRequestFullscreen();
+                }
+            }
+        });
+    </script>
+    
+    {{{ SCRIPT }}}
+</body>
+</html>
