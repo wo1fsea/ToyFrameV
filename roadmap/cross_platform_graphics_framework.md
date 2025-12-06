@@ -96,7 +96,7 @@ ToyFrameV/
 - [x] HTML template (`web/template.html`)
 - [x] WebGL shader compatibility
 
-### ✅ Stage 5.5: System Architecture (Completed)
+### ✅ Stage 6: System Architecture (Completed)
 - [x] **System Base Class** (`System.h`)
   - [x] Unified lifecycle: `Initialize`, `PreUpdate`, `Update`, `PostUpdate`, `Render`, `Shutdown`
   - [x] Priority-based ordering (`SystemPriority` enum)
@@ -110,29 +110,123 @@ ToyFrameV/
   - [x] `WindowSystem` - Platform window management (Priority: 0)
   - [x] `InputSystem` - Input state per-frame updates (Priority: 100)
   - [x] `GraphicsSystem` - Rendering context and frame management (Priority: 1000)
-- [x] **App Refactored** to use `SystemManager`
-  - [x] `App::GetSystem<T>()` template for system access
-  - [x] `App::GetGraphics()` delegates to `GraphicsSystem`
-  - [x] Emscripten `emscripten_set_main_loop` compatibility maintained
-
-### ✅ Stage 5.6: I/O System (Completed)
-- [x] **IOBuffer Class**
-  - [x] Zero-copy move semantics with `unique_ptr<uint8_t[]>`
-  - [x] Convenient accessors (`AsString()`, `AsStringView()`)
-  - [x] `ToVector()` for STL compatibility
 - [x] **IOSystem** (`IOSystem.h`, `IOSystem.cpp`)
-  - [x] Unified path scheme (`file://`, `assets://`, `documents://`, `http://`, `https://`)
-  - [x] Platform-specific directories (Assets, Documents, Cache, Temp)
-  - [x] Synchronous API: `ReadFile()`, `WriteFile()`, `Exists()`, `Delete()`
-  - [x] Asynchronous API: `ReadFileAsync()`, `WriteFileAsync()` with callbacks
-  - [x] Network support placeholder for HTTP/HTTPS
-- [x] **HelloIO Sample** - I/O system demonstration
+  - [x] Zero-copy `IOBuffer` with move semantics
+  - [x] Path schemes (`assets://`, `documents://`, `http://`, etc.)
+  - [x] Sync/Async file I/O API
+  - [x] Platform-specific directories
+- [x] **App Refactored** to use `SystemManager`
 
 ---
 
 ## 🚧 Next Stage Tasks
 
-### 📋 Stage 6: System Architecture Enhancement (TODO)
+### 📋 Stage 7: Core Utilities (TODO)
+Low-level utilities used by Systems and user code.
+
+#### 7.1 Threading Module
+```
+include/ToyFrameV/Core/Threading.h
+src/Core/Threading.cpp
+```
+- [ ] **ThreadPool**
+  - [ ] Worker thread pool with configurable size
+  - [ ] `Submit(task)` returning `Future<T>`
+  - [ ] `GetDefault()` singleton access
+  - [ ] Graceful shutdown with task completion
+- [ ] **Task/Future**
+  - [ ] `Task<T>` - callable wrapper
+  - [ ] `Future<T>` - result with `Wait()`, `Get()`, `IsReady()`
+  - [ ] Exception propagation
+- [ ] **Synchronization Primitives**
+  - [ ] `Mutex` - wrapper with debug checks
+  - [ ] `SpinLock` - for short critical sections
+  - [ ] `Semaphore` - counting semaphore
+- [ ] **Platform Implementation**
+  - [ ] Windows: `std::thread` + Win32 primitives
+  - [ ] Web: Single-threaded fallback (Web Workers future)
+
+#### 7.2 Log Module
+```
+include/ToyFrameV/Core/Log.h
+src/Core/Log.cpp
+```
+- [ ] **Log Levels**
+  - [ ] `Trace`, `Debug`, `Info`, `Warning`, `Error`, `Fatal`
+  - [ ] Runtime level filtering
+  - [ ] Compile-time level stripping (Release)
+- [ ] **Log Interface**
+  ```cpp
+  Log::Info("Player {} joined", playerId);
+  Log::Error("Failed to load: {}", filename);
+  ```
+- [ ] **Log Sinks** (outputs)
+  - [ ] Console sink (stdout with colors)
+  - [ ] File sink (rotating files)
+  - [ ] Custom sink interface for extensions
+- [ ] **Features**
+  - [ ] Source location (file, line, function)
+  - [ ] Timestamp formatting
+  - [ ] Category/tag filtering
+  - [ ] Thread-safe buffered output
+- [ ] **Platform Support**
+  - [ ] Windows: Console colors via Win32
+  - [ ] Web: `console.log()` / `console.error()`
+
+### 📋 Stage 8: Debug Systems (TODO)
+Debug-only Systems (stripped in Release builds).
+
+#### 8.1 ConsoleSystem
+```
+include/ToyFrameV/ConsoleSystem.h
+src/System/ConsoleSystem.cpp
+```
+- [ ] **Console UI**
+  - [ ] Toggle with `` ` `` (backtick) key
+  - [ ] Semi-transparent overlay rendering
+  - [ ] Text input field with cursor
+  - [ ] Scrollable output history
+- [ ] **Command System**
+  - [ ] `RegisterCommand(name, callback, help)`
+  - [ ] Command auto-completion (Tab)
+  - [ ] Command history (Up/Down arrows)
+  - [ ] Argument parsing
+- [ ] **Built-in Commands**
+  - [ ] `help` - list all commands
+  - [ ] `clear` - clear output
+  - [ ] `quit` - exit application
+  - [ ] `systems` - list registered systems
+  - [ ] `fps` - toggle FPS display
+  - [ ] `set <cvar> <value>` - modify CVars
+- [ ] **Log Integration**
+  - [ ] Subscribe to Log output
+  - [ ] Color-coded log levels
+  - [ ] Filter by log level/category
+- [ ] **CVar System** (Console Variables)
+  ```cpp
+  CVar<float> g_gravity("physics.gravity", 9.8f, "Gravity acceleration");
+  // In console: set physics.gravity 20.0
+  ```
+- [ ] **Text Rendering**
+  - [ ] Simple bitmap font or LLGL text rendering
+  - [ ] Fixed-width font for alignment
+- [ ] **Priority**: `SystemPriority::DebugUI` (850)
+  - [ ] Update: Process input when console open
+  - [ ] Render: Draw after scene, before present
+
+#### 8.2 Debug Macros
+```cpp
+// Compile-time stripping
+#ifdef TOYFRAMEV_DEBUG
+    #define TOYFRAMEV_ASSERT(cond, msg) ...
+    #define TOYFRAMEV_LOG_DEBUG(...) Log::Debug(__VA_ARGS__)
+#else
+    #define TOYFRAMEV_ASSERT(cond, msg) ((void)0)
+    #define TOYFRAMEV_LOG_DEBUG(...) ((void)0)
+#endif
+```
+
+### 📋 Stage 9: System Architecture Enhancement (TODO)
 - [ ] **Event Bus System**
   - [ ] `EventBus` class with `Publish<T>()` / `Subscribe<T>()`
   - [ ] Decouple system-to-system communication
@@ -143,7 +237,7 @@ ToyFrameV/
   - [ ] Dynamic system loading from config
   - [ ] System parameter configuration
 
-### 📋 Stage 7: Cross-Platform Extension
+### 📋 Stage 10: Cross-Platform Extension
 - [ ] **macOS Support**
   - [ ] Metal backend testing
   - [ ] Cocoa window creation
@@ -153,7 +247,7 @@ ToyFrameV/
   - [ ] X11/Wayland window
   - [ ] Input event handling
 
-### 📋 Stage 8: Feature Enhancement
+### 📋 Stage 11: Feature Enhancement
 - [ ] **Texture System**
   - [ ] Texture loading (PNG/JPG)
   - [ ] Texture samplers
@@ -165,7 +259,7 @@ ToyFrameV/
   - [ ] Vector/matrix operations
   - [ ] Transform utility functions
 
-### 📋 Stage 9: Mobile Support
+### 📋 Stage 12: Mobile Support
 - [ ] **Android**
   - [ ] NDK build configuration
   - [ ] EGL/OpenGL ES backend
@@ -175,8 +269,8 @@ ToyFrameV/
   - [ ] Metal backend
   - [ ] Touch input
 
-### 📋 Stage 10: Advanced Features (Long-term)
-- [ ] ImGui integration
+### 📋 Stage 13: Advanced Features (Long-term)
+- [ ] ImGui integration (alternative to ConsoleSystem)
 - [ ] Multi-pass rendering
 - [ ] Resource manager
 - [ ] Scene graph system
@@ -200,9 +294,25 @@ ToyFrameV/
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 300  │ (Physics)      │ Physics simulation        │
 ├─────────────────────────────────────────────────────────────┤
+│  Priority 850  │ ConsoleSystem  │ Debug UI overlay          │
+├─────────────────────────────────────────────────────────────┤
 │  Priority 900  │ (PreRender)    │ Render preparations       │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 1000 │ GraphicsSystem │ Frame present/swap        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Core Utilities vs Systems
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Core Utilities (No frame updates, stateless services)      │
+│  ├── Threading  │ ThreadPool, Task, Future, Mutex          │
+│  ├── Log        │ Logging with levels, sinks, formatting   │
+│  └── (Future)   │ Memory allocators, Math library          │
+├─────────────────────────────────────────────────────────────┤
+│  Systems (Frame-driven, stateful, lifecycle-managed)        │
+│  ├── WindowSystem, InputSystem, GraphicsSystem, IOSystem   │
+│  └── ConsoleSystem, AudioSystem, PhysicsSystem (future)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
