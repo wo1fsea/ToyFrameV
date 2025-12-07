@@ -124,11 +124,7 @@ ToyFrameV/
   - [x] Platform-specific directories
 - [x] **App Refactored** to use `SystemManager`
 
----
-
-## 🚧 Next Stage Tasks
-
-### ✅ Stage 7: Core Utilities (Completed - initial implementation)
+### ✅ Stage 7: Core Utilities (Completed)
 Low-level utilities used by Systems and user code. ThreadPool uses standard threads; Web without pthreads falls back to immediate execution; Log uses header-only fmt-style formatter.
 
 #### 7.1 Threading Module
@@ -139,7 +135,7 @@ src/Core/Threading.cpp
 - [x] **ThreadPool**
   - [x] Worker thread pool with configurable size (default = hardware concurrency)
   - [x] `Submit(task)` returning `Future<T>`
-  - [x] `GetDefault()` singleton access
+  - [x] `GetDefault()` singleton access (parameters only used on first call)
   - [x] Graceful shutdown with pending-task cancellation option
 - [x] **Task/Future**
   - [x] `Task<T>` - callable wrapper
@@ -147,7 +143,7 @@ src/Core/Threading.cpp
   - [x] Exception propagation
 - [x] **Synchronization Primitives**
   - [x] `Mutex`, `LockGuard`, `ScopedLock`
-  - [x] `SpinLock` - for short critical sections
+  - [x] `SpinLock` - with `yield()` to avoid CPU waste
   - [x] `Semaphore` - counting semaphore
 - [x] **Platform Implementation**
   - [x] Windows: `std::thread`-based workers
@@ -162,26 +158,46 @@ src/Core/Log.cpp
   - [x] `Trace`, `Debug`, `Info`, `Warning`, `Error`, `Fatal`
   - [x] Runtime level filtering
   - [x] Compile-time level stripping (Release)
-- [x] **Log Interface**
+- [x] **Log Interface** (use macros for correct source location)
   ```cpp
-  Log::Info("Player {} joined", playerId);
-  Log::Error("Failed to load: {}", filename);
+  TOYFRAMEV_LOG_INFO("Player {} joined", playerId);
+  TOYFRAMEV_LOG_ERROR("Failed to load: {}", filename);
   ```
 - [x] **Log Sinks** (outputs)
   - [x] Console sink (stdout with colors, synchronous)
-  - [x] File sink (rotating files, async worker, bounded queue blocks on full)
+  - [x] File sink (rotating files, async worker, `flushEachMessage` option)
   - [x] Custom sink interface for extensions
 - [x] **Features**
   - [x] Source location (file, line, function)
   - [x] Timestamp + thread id formatting
   - [x] Category/tag filtering
   - [x] Thread-safe dispatch, async file buffering
+  - [x] Always flush file on shutdown
 - [x] **Platform Support**
-  - [x] Windows: Console colors via Win32 API
+  - [x] Windows: Console colors via Win32 API (with error handling)
   - [x] Web: `console.log()` / `console.error()` via Emscripten
 
+#### 7.3 fmt-style Formatter
+```
+third_party/fmt/core.h
+```
+- [x] **Minimal header-only implementation**
+  - [x] `fmt::format()` with `{}` placeholders
+  - [x] Proper `{{` and `}}` escape sequence handling
+  - [x] Type-safe argument formatting via `std::ostringstream`
+
 - **Samples**
-  - [x] `HelloThreadLog` sample using ThreadPool and Log (console + async file sink)
+  - [x] `HelloThreadLog` sample with comprehensive edge case tests:
+    - All log levels
+    - Format string edge cases (empty, escapes, long strings, special chars)
+    - Level filtering test
+    - Category filtering test
+    - Rapid logging stress test
+    - ThreadPool task execution
+
+---
+
+## 🚧 Next Stage Tasks
 
 ### 📋 Stage 8: Debug Systems (TODO)
 Debug-only Systems (stripped in Release builds).
