@@ -90,6 +90,7 @@ class FileSink : public ILogSink {
     std::thread m_thread;
     size_t m_currentSize = 0;
     std::ofstream m_stream;
+    bool m_useAsync = true;
 };
 
 class Log {
@@ -127,27 +128,27 @@ class Log {
     // Convenience helpers
     template <typename... Args>
     static void Trace(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Trace, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Trace, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
     template <typename... Args>
     static void Debug(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Debug, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Debug, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
     template <typename... Args>
     static void Info(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Info, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Info, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
     template <typename... Args>
     static void Warning(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Warning, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Warning, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
     template <typename... Args>
     static void Error(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Error, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Error, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
     template <typename... Args>
     static void Fatal(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Fatal, SourceLocation::Current(), fmtStr, std::forward<Args>(args)...);
+        Write(Level::Fatal, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
     }
 
     static bool IsLevelEnabled(Level level);

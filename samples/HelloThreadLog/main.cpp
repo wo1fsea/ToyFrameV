@@ -6,6 +6,14 @@
 using namespace ToyFrameV;
 using namespace ToyFrameV::Core;
 
+namespace {
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+constexpr bool kWebNoThreads = true;
+#else
+constexpr bool kWebNoThreads = false;
+#endif
+}
+
 class HelloThreadLogApp : public App {
   public:
     HelloThreadLogApp() {
@@ -18,10 +26,14 @@ class HelloThreadLogApp : public App {
     bool OnInit() override {
         // Configure logging: console (sync) + file (async)
         Log::UseDefaultSinks();
-        FileSink::Options fileOptions;
-        fileOptions.path = "logs/hello_thread_log.log";
-        fileOptions.queueCapacity = 64;  // small to demonstrate backpressure
-        Log::EnableFileSink(fileOptions);
+        if (!kWebNoThreads) {  // Skip file sink on single-threaded Web build
+            FileSink::Options fileOptions;
+            fileOptions.path = "logs/hello_thread_log.log";
+            fileOptions.queueCapacity = 64;  // small to demonstrate backpressure
+            Log::EnableFileSink(fileOptions);
+        } else {
+            TOYFRAMEV_LOG_INFO("File sink disabled on single-threaded Web build");
+        }
         Log::SetLevel(Level::Debug);
 
         TOYFRAMEV_LOG_INFO("HelloThreadLog starting");
@@ -31,8 +43,17 @@ class HelloThreadLogApp : public App {
         for (int i = 0; i < 16; ++i) {
             auto future = pool.Submit([i] {
                 TOYFRAMEV_LOG_DEBUG("Task {} started", i);
-                std::this_thread::sleep_for(std::chrono::milliseconds(50 + (i * 10)));
-                return i * i;
+                if constexpr (kWebNoThreads) {
+                    // On single-threaded Web builds, avoid blocking sleeps
+                    volatile int acc = 0;
+                    for (int j = 0; j < 10000 + i * 1000; ++j) {
+                        acc += j % (i + 1);
+                    }
+                    return acc;
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50 + (i * 10)));
+                    return i * i;
+                }
             });
             m_tasks.push_back({i, std::move(future), false});
         }

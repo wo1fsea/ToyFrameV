@@ -139,8 +139,16 @@ void ConsoleSink::OnMessage(const LogMessage& message) {
 // ============================== FileSink ====================================
 
 FileSink::FileSink(Options options) : m_options(std::move(options)) {
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+    m_useAsync = false;
+#else
+    m_useAsync = true;
+#endif
+
     OpenFile();
-    m_thread = std::thread([this] { WorkerLoop(); });
+    if (m_useAsync) {
+        m_thread = std::thread([this] { WorkerLoop(); });
+    }
 }
 
 FileSink::~FileSink() { Shutdown(); }
@@ -151,10 +159,12 @@ void FileSink::Shutdown() {
         if (!m_running) return;
         m_running = false;
     }
-    m_cvNotEmpty.notify_all();
-    m_cvNotFull.notify_all();
-    if (m_thread.joinable()) {
-        m_thread.join();
+    if (m_useAsync) {
+        m_cvNotEmpty.notify_all();
+        m_cvNotFull.notify_all();
+        if (m_thread.joinable()) {
+            m_thread.join();
+        }
     }
     CloseFile();
 }
@@ -163,6 +173,23 @@ void FileSink::OnMessage(const LogMessage& message) {
     Record rec;
     rec.formatted = message.formatted;
     rec.level = message.level;
+
+    if (!m_useAsync) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (!m_running) return;
+        if (!m_stream.is_open()) {
+            OpenFile();
+        }
+        if (m_stream.is_open()) {
+            RotateIfNeeded(rec.formatted.size() + 1);
+            m_stream << rec.formatted << '\n';
+            m_currentSize += rec.formatted.size() + 1;
+            if (rec.level == Level::Fatal || m_options.flushOnShutdown) {
+                m_stream.flush();
+            }
+        }
+        return;
+    }
 
     std::unique_lock<std::mutex> lock(m_mutex);
     m_cvNotFull.wait(lock, [&] { return !m_running || m_queue.size() < m_options.queueCapacity; });
