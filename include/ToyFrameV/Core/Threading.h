@@ -48,6 +48,8 @@ class SpinLock {
   public:
     void lock() {
         while (m_flag.test_and_set(std::memory_order_acquire)) {
+          // Yield to avoid wasting CPU cycles in tight spin
+          std::this_thread::yield();
         }
     }
     void unlock() { m_flag.clear(std::memory_order_release); }

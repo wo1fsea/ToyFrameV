@@ -88,8 +88,10 @@ size_t ThreadPool::GetQueueSize() const {
 }
 
 ThreadPool& ThreadPool::GetDefault(size_t threads, size_t maxQueueSize) {
-    static ThreadPool defaultPool(threads, maxQueueSize);
-    return defaultPool;
+  // Note: Parameters are only used on first call. Subsequent calls return the
+  // existing pool.
+  static ThreadPool defaultPool(threads, maxQueueSize);
+  return defaultPool;
 }
 
 }  // namespace ToyFrameV::Core

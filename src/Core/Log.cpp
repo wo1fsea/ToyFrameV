@@ -35,91 +35,107 @@ std::string LevelToString(Level level) {
         case Level::Warning: return "Warning";
         case Level::Error: return "Error";
         case Level::Fatal: return "Fatal";
-    }
-    return "Unknown";
+        default:
+          return "Unknown";
+            }
 }
 
 uint64_t GetThreadId() {
-    return std::hash<std::thread::id>{}(std::this_thread::get_id());
+  return std::hash<std::thread::id>{}(std::this_thread::get_id());
 }
 
-std::string FormatTimestamp(const std::chrono::system_clock::time_point& tp) {
-    auto time = std::chrono::system_clock::to_time_t(tp);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
-    std::tm tm {};
+std::string FormatTimestamp(const std::chrono::system_clock::time_point &tp) {
+  auto time = std::chrono::system_clock::to_time_t(tp);
+  auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                tp.time_since_epoch()) %
+            1000;
+  std::tm tm{};
 #if defined(_WIN32)
-    localtime_s(&tm, &time);
+  localtime_s(&tm, &time);
 #else
-    localtime_r(&time, &tm);
+  localtime_r(&time, &tm);
 #endif
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << '.'
-        << std::setw(3) << std::setfill('0') << ms.count();
-    return oss.str();
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << '.' << std::setw(3)
+      << std::setfill('0') << ms.count();
+  return oss.str();
 }
 
-std::string BuildFormatted(const LogMessage& msg) {
-    std::ostringstream oss;
-    oss << '[' << FormatTimestamp(msg.timestamp) << ']';
-    oss << "[tid:" << msg.threadId << ']';
-    oss << '[' << LevelToString(msg.level) << ']';
-    if (!msg.category.empty()) {
-        oss << '[' << msg.category << ']';
-    }
-    oss << ' ' << msg.text;
-    return oss.str();
+std::string BuildFormatted(const LogMessage &msg) {
+  std::ostringstream oss;
+  oss << '[' << FormatTimestamp(msg.timestamp) << ']';
+  oss << "[tid:" << msg.threadId << ']';
+  oss << '[' << LevelToString(msg.level) << ']';
+  if (!msg.category.empty()) {
+    oss << '[' << msg.category << ']';
+  }
+  oss << ' ' << msg.text;
+  return oss.str();
 }
 
 class LoggerInstance {
-  public:
-    LoggerInstance() {
-        // Default: add console sink
-        sinks.push_back(std::make_shared<ConsoleSink>());
-    }
+public:
+  LoggerInstance() {
+    // Default: add console sink
+    sinks.push_back(std::make_shared<ConsoleSink>());
+  }
 
-    std::mutex mutex;
-    Level runtimeLevel = Level::Debug;
-    std::vector<std::shared_ptr<ILogSink>> sinks;
-    std::unordered_map<std::string, bool> categoryEnabled;
+  std::mutex mutex;
+  Level runtimeLevel = Level::Debug;
+  std::vector<std::shared_ptr<ILogSink>> sinks;
+  std::unordered_map<std::string, bool> categoryEnabled;
 };
 
-LoggerInstance& Instance() {
-    static LoggerInstance inst;
-    return inst;
+LoggerInstance &Instance() {
+  static LoggerInstance inst;
+  return inst;
 }
 
-}  // namespace
+} // namespace
 
 // ============================== ConsoleSink =================================
 
-void ConsoleSink::OnMessage(const LogMessage& message) {
+void ConsoleSink::OnMessage(const LogMessage &message) {
 #ifdef __EMSCRIPTEN__
-    std::string line = message.formatted;
-    if (message.level >= Level::Error) {
-        EM_ASM_({ console.error(UTF8ToString($0)); }, line.c_str());
-    } else {
-        EM_ASM_({ console.log(UTF8ToString($0)); }, line.c_str());
-    }
-    return;
+  std::string line = message.formatted;
+  if (message.level >= Level::Error) {
+    EM_ASM_({ console.error(UTF8ToString($0)); }, line.c_str());
+  } else {
+    EM_ASM_({ console.log(UTF8ToString($0)); }, line.c_str());
+  }
+  return;
 #else
 #ifdef PLATFORM_WINDOWS
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO info {};
-    GetConsoleScreenBufferInfo(hConsole, &info);
-    WORD originalAttr = info.wAttributes;
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+  CONSOLE_SCREEN_BUFFER_INFO info{};
+  WORD originalAttr =
+      FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Default white
+  if (GetConsoleScreenBufferInfo(hConsole, &info)) {
+    originalAttr = info.wAttributes;
+  }
 
-    WORD color = originalAttr;
-    switch (message.level) {
-        case Level::Trace:
-        case Level::Debug: color = FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE; break;
-        case Level::Info: color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; break;
-        case Level::Warning: color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
-        case Level::Error:
-        case Level::Fatal: color = FOREGROUND_RED | FOREGROUND_INTENSITY; break;
-    }
-    SetConsoleTextAttribute(hConsole, color);
-    std::cout << message.formatted << std::endl;
-    SetConsoleTextAttribute(hConsole, originalAttr);
+  WORD color = originalAttr;
+  switch (message.level) {
+  case Level::Trace:
+  case Level::Debug:
+    color = FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    break;
+  case Level::Info:
+    color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    break;
+  case Level::Warning:
+    color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+    break;
+  case Level::Error:
+  case Level::Fatal:
+    color = FOREGROUND_RED | FOREGROUND_INTENSITY;
+    break;
+  default:
+    break;
+  }
+  SetConsoleTextAttribute(hConsole, color);
+  std::cout << message.formatted << std::endl;
+  SetConsoleTextAttribute(hConsole, originalAttr);
 #else
     const char* color = "";
     const char* reset = "\033[0m";
@@ -184,8 +200,8 @@ void FileSink::OnMessage(const LogMessage& message) {
             RotateIfNeeded(rec.formatted.size() + 1);
             m_stream << rec.formatted << '\n';
             m_currentSize += rec.formatted.size() + 1;
-            if (rec.level == Level::Fatal || m_options.flushOnShutdown) {
-                m_stream.flush();
+            if (rec.level == Level::Fatal || m_options.flushEachMessage) {
+              m_stream.flush();
             }
         }
         return;
@@ -222,13 +238,14 @@ void FileSink::WorkerLoop() {
         RotateIfNeeded(rec.formatted.size() + 1);
         m_stream << rec.formatted << '\n';
         m_currentSize += rec.formatted.size() + 1;
-        if (rec.level == Level::Fatal || m_options.flushOnShutdown) {
-            m_stream.flush();
+        if (rec.level == Level::Fatal || m_options.flushEachMessage) {
+          m_stream.flush();
         }
     }
 
-    if (m_options.flushOnShutdown && m_stream.is_open()) {
-        m_stream.flush();
+    // Always flush on shutdown
+    if (m_stream.is_open()) {
+      m_stream.flush();
     }
 }
 

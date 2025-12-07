@@ -13,34 +13,52 @@ namespace fmt {
 
 namespace detail {
 
+// Append literal text, handling }} escape sequences
 inline void AppendLiteral(std::string& out, std::string_view literal) {
-    out.append(literal.data(), literal.size());
+    size_t i = 0;
+    while (i < literal.size()) {
+        auto pos = literal.find("}}", i);
+        if (pos == std::string_view::npos) {
+            out.append(literal.data() + i, literal.size() - i);
+            break;
+        }
+        out.append(literal.data() + i, pos - i);
+        out.push_back('}');  // }} -> }
+        i = pos + 2;
+    }
 }
 
-inline void ReplaceNextPlaceholder(std::string& out, std::string_view fmt, size_t& pos) {
+// Returns true if a real placeholder was found, false if it was an escape or
+// end of string
+inline bool ReplaceNextPlaceholder(std::string &out, std::string_view fmt,
+                                   size_t &pos) {
+  while (pos < fmt.size()) {
     auto open = fmt.find('{', pos);
     if (open == std::string_view::npos) {
-        AppendLiteral(out, fmt.substr(pos));
-        pos = fmt.size();
-        return;
+      AppendLiteral(out, fmt.substr(pos));
+      pos = fmt.size();
+      return false;
     }
     AppendLiteral(out, fmt.substr(pos, open - pos));
 
-    // Look for closing brace
+    // Look for closing brace or escape
     if (open + 1 < fmt.size() && fmt[open + 1] == '{') {
-        // Escaped "{{"
-        out.push_back('{');
-        pos = open + 2;
-        return;
+      // Escaped "{{" - output single '{' and continue searching
+      out.push_back('{');
+      pos = open + 2;
+      continue;
     }
 
     auto close = fmt.find('}', open + 1);
     if (close == std::string_view::npos) {
-        throw std::runtime_error("fmt: unmatched '{'");
+      throw std::runtime_error("fmt: unmatched '{'");
     }
 
-    // Only "{}" supported; ignore contents between braces
+    // Found a real placeholder
     pos = close + 1;
+    return true;
+  }
+  return false;
 }
 
 template <typename T>
@@ -58,9 +76,14 @@ inline void FormatImpl(std::string& out, std::string_view fmt, size_t& pos) {
 
 template <typename T, typename... Rest>
 void FormatImpl(std::string& out, std::string_view fmt, size_t& pos, T&& value, Rest&&... rest) {
-    ReplaceNextPlaceholder(out, fmt, pos);
+  if (ReplaceNextPlaceholder(out, fmt, pos)) {
     FormatOne(out, std::forward<T>(value));
     FormatImpl(out, fmt, pos, std::forward<Rest>(rest)...);
+  } else {
+    // No placeholder found but arguments remain - just continue with remaining
+    // args
+    FormatImpl(out, fmt, pos, std::forward<Rest>(rest)...);
+  }
 }
 
 }  // namespace detail
@@ -71,15 +94,6 @@ std::string format(std::string_view fmtStr, Args&&... args) {
     result.reserve(fmtStr.size() + 32);
     size_t pos = 0;
     detail::FormatImpl(result, fmtStr, pos, std::forward<Args>(args)...);
-
-    // If there are still unmatched placeholders, detect them
-    if (pos < fmtStr.size()) {
-        // Scan for any unmatched '}'
-        auto extraClose = fmtStr.find('}', pos);
-        if (extraClose != std::string_view::npos) {
-            throw std::runtime_error("fmt: unmatched '}'");
-        }
-    }
     return result;
 }
 

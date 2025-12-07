@@ -60,7 +60,8 @@ class FileSink : public ILogSink {
         size_t maxBytes = 5 * 1024 * 1024;
         size_t maxFiles = 3;
         size_t queueCapacity = 1024;
-        bool flushOnShutdown = true;
+        bool flushEachMessage =
+            false; // Flush after each message (slow but safe)
     };
 
     explicit FileSink(Options options);
@@ -86,7 +87,6 @@ class FileSink : public ILogSink {
     std::condition_variable m_cvNotFull;
     std::deque<Record> m_queue;
     bool m_running = true;
-    bool m_droppedWarningSent = false;
     std::thread m_thread;
     size_t m_currentSize = 0;
     std::ofstream m_stream;
@@ -125,31 +125,9 @@ class Log {
         Write(level, {}, loc, fmtStr, std::forward<Args>(args)...);
     }
 
-    // Convenience helpers
-    template <typename... Args>
-    static void Trace(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Trace, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
-    template <typename... Args>
-    static void Debug(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Debug, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
-    template <typename... Args>
-    static void Info(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Info, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
-    template <typename... Args>
-    static void Warning(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Warning, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
-    template <typename... Args>
-    static void Error(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Error, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
-    template <typename... Args>
-    static void Fatal(std::string_view fmtStr, Args&&... args) {
-        Write(Level::Fatal, SourceLocation::Current(__FILE__, __func__, __LINE__), fmtStr, std::forward<Args>(args)...);
-    }
+    // NOTE: Prefer TOYFRAMEV_LOG_* macros for accurate source location.
+    // These convenience helpers record Log.h as the source location, not the
+    // caller's.
 
     static bool IsLevelEnabled(Level level);
 
