@@ -3,6 +3,8 @@
 set(CORE_SOURCES
     App.cpp
     Input.cpp
+    Core/Threading.cpp
+    Core/Log.cpp
     Graphics/Graphics.cpp
     System/SystemManager.cpp
     System/WindowSystem.cpp
@@ -54,6 +56,7 @@ add_library(ToyFrameV STATIC ${CORE_SOURCES})
 # Include directories
 target_include_directories(ToyFrameV PUBLIC
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/third_party
     ${llgl_SOURCE_DIR}/include
 )
 

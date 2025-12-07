@@ -21,6 +21,8 @@
 #include "ToyFrameV/InputSystem.h"
 #include "ToyFrameV/System.h"
 #include "ToyFrameV/WindowSystem.h"
+#include "ToyFrameV/Core/Log.h"
+#include "ToyFrameV/Core/Threading.h"
 
 // Version info
 #define TOYFRAMEV_VERSION_MAJOR 0

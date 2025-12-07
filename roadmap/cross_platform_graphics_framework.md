@@ -34,10 +34,15 @@ ToyFrameV/
 │   ├── WindowSystem.h          # Window subsystem
 │   ├── GraphicsSystem.h        # Graphics subsystem
 │   ├── InputSystem.h           # Input subsystem
-│   └── IOSystem.h              # I/O subsystem (file/network)
+│   ├── IOSystem.h              # I/O subsystem (file/network)
+│   └── Core/                   # Core utilities
+│       ├── Log.h               # Logging API
+│       └── Threading.h         # ThreadPool/Future and sync primitives
 ├── src/
 │   ├── App.cpp                 # App implementation
 │   ├── Input.cpp               # Input core implementation
+│   ├── Core/Threading.cpp      # ThreadPool/Future implementation
+│   ├── Core/Log.cpp            # Logging implementation
 │   ├── Window/WindowWindows.cpp
 │   ├── Input/InputWindows.cpp
 │   ├── Graphics/Graphics.cpp   # LLGL renderer wrapper
@@ -53,7 +58,9 @@ ToyFrameV/
 ├── samples/
 │   ├── HelloApp/               # Basic application sample
 │   ├── HelloTriangle/          # Triangle rendering sample
-│   └── HelloIO/                # I/O system sample
+│   ├── HelloIO/                # I/O system sample
+│   └── HelloThreadLog/         # ThreadPool + Log sample
+├── third_party/fmt/core.h      # Minimal header-only fmt-style formatter
 ├── web/template.html           # Web build template
 └── docs/WebGL_Build.md         # Web build documentation
 ```
@@ -121,57 +128,60 @@ ToyFrameV/
 
 ## 🚧 Next Stage Tasks
 
-### 📋 Stage 7: Core Utilities (TODO)
-Low-level utilities used by Systems and user code.
+### ✅ Stage 7: Core Utilities (Completed - initial implementation)
+Low-level utilities used by Systems and user code. ThreadPool uses standard threads; Web without pthreads falls back to immediate execution; Log uses header-only fmt-style formatter.
 
 #### 7.1 Threading Module
 ```
 include/ToyFrameV/Core/Threading.h
 src/Core/Threading.cpp
 ```
-- [ ] **ThreadPool**
-  - [ ] Worker thread pool with configurable size
-  - [ ] `Submit(task)` returning `Future<T>`
-  - [ ] `GetDefault()` singleton access
-  - [ ] Graceful shutdown with task completion
-- [ ] **Task/Future**
-  - [ ] `Task<T>` - callable wrapper
-  - [ ] `Future<T>` - result with `Wait()`, `Get()`, `IsReady()`
-  - [ ] Exception propagation
-- [ ] **Synchronization Primitives**
-  - [ ] `Mutex` - wrapper with debug checks
-  - [ ] `SpinLock` - for short critical sections
-  - [ ] `Semaphore` - counting semaphore
-- [ ] **Platform Implementation**
-  - [ ] Windows: `std::thread` + Win32 primitives
-  - [ ] Web: Single-threaded fallback (Web Workers future)
+- [x] **ThreadPool**
+  - [x] Worker thread pool with configurable size (default = hardware concurrency)
+  - [x] `Submit(task)` returning `Future<T>`
+  - [x] `GetDefault()` singleton access
+  - [x] Graceful shutdown with pending-task cancellation option
+- [x] **Task/Future**
+  - [x] `Task<T>` - callable wrapper
+  - [x] `Future<T>` - result with `Wait()`, `Get()`, `IsReady()`, `Cancel()`
+  - [x] Exception propagation
+- [x] **Synchronization Primitives**
+  - [x] `Mutex`, `LockGuard`, `ScopedLock`
+  - [x] `SpinLock` - for short critical sections
+  - [x] `Semaphore` - counting semaphore
+- [x] **Platform Implementation**
+  - [x] Windows: `std::thread`-based workers
+  - [x] Web: Single-threaded fallback when pthreads unavailable
 
 #### 7.2 Log Module
 ```
 include/ToyFrameV/Core/Log.h
 src/Core/Log.cpp
 ```
-- [ ] **Log Levels**
-  - [ ] `Trace`, `Debug`, `Info`, `Warning`, `Error`, `Fatal`
-  - [ ] Runtime level filtering
-  - [ ] Compile-time level stripping (Release)
-- [ ] **Log Interface**
+- [x] **Log Levels**
+  - [x] `Trace`, `Debug`, `Info`, `Warning`, `Error`, `Fatal`
+  - [x] Runtime level filtering
+  - [x] Compile-time level stripping (Release)
+- [x] **Log Interface**
   ```cpp
   Log::Info("Player {} joined", playerId);
   Log::Error("Failed to load: {}", filename);
   ```
-- [ ] **Log Sinks** (outputs)
-  - [ ] Console sink (stdout with colors)
-  - [ ] File sink (rotating files)
-  - [ ] Custom sink interface for extensions
-- [ ] **Features**
-  - [ ] Source location (file, line, function)
-  - [ ] Timestamp formatting
-  - [ ] Category/tag filtering
-  - [ ] Thread-safe buffered output
-- [ ] **Platform Support**
-  - [ ] Windows: Console colors via Win32
-  - [ ] Web: `console.log()` / `console.error()`
+- [x] **Log Sinks** (outputs)
+  - [x] Console sink (stdout with colors, synchronous)
+  - [x] File sink (rotating files, async worker, bounded queue blocks on full)
+  - [x] Custom sink interface for extensions
+- [x] **Features**
+  - [x] Source location (file, line, function)
+  - [x] Timestamp + thread id formatting
+  - [x] Category/tag filtering
+  - [x] Thread-safe dispatch, async file buffering
+- [x] **Platform Support**
+  - [x] Windows: Console colors via Win32 API
+  - [x] Web: `console.log()` / `console.error()` via Emscripten
+
+- **Samples**
+  - [x] `HelloThreadLog` sample using ThreadPool and Log (console + async file sink)
 
 ### 📋 Stage 8: Debug Systems (TODO)
 Debug-only Systems (stripped in Release builds).
@@ -382,5 +392,4 @@ Build outputs are located in `build-web/bin/`. Use a local HTTP server to run th
 
 ---
 
-*Last updated: December 6, 2025*
-
+*Last updated: December 7, 2025*
