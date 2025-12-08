@@ -7,6 +7,7 @@
 
 #include <ToyFrameV.h>
 #include <iostream>
+#include <cmath>
 
 using namespace ToyFrameV;
 

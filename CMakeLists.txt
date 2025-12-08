@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(ToyFrameV VERSION 0.1.0 LANGUAGES CXX)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -80,6 +80,42 @@ elseif(UNIX)
 endif()
 
 FetchContent_MakeAvailable(LLGL)
+
+# Patch LLGL macros for GCC compatibility
+FetchContent_GetProperties(LLGL SOURCE_DIR llgl_SOURCE_DIR)
+if(llgl_SOURCE_DIR AND UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
+    # Patch Exception.h
+    file(READ "${llgl_SOURCE_DIR}/sources/Core/Exception.h" EXCEPTION_CONTENT)
+    string(REPLACE 
+        "LLGL_VA_ARGS(__VA_ARGS__)"
+        ", ##__VA_ARGS__"
+        EXCEPTION_CONTENT "${EXCEPTION_CONTENT}")
+    file(WRITE "${llgl_SOURCE_DIR}/sources/Core/Exception.h" "${EXCEPTION_CONTENT}")
+    
+    # Patch Assertion.h
+    file(READ "${llgl_SOURCE_DIR}/sources/Core/Assertion.h" ASSERTION_CONTENT)
+    string(REPLACE 
+        "LLGL_VA_ARGS(__VA_ARGS__)"
+        ", ##__VA_ARGS__"
+        ASSERTION_CONTENT "${ASSERTION_CONTENT}")
+    file(WRITE "${llgl_SOURCE_DIR}/sources/Core/Assertion.h" "${ASSERTION_CONTENT}")
+    
+    # Patch GLExtensionRegistry.h
+    file(READ "${llgl_SOURCE_DIR}/sources/Renderer/OpenGL/Ext/GLExtensionRegistry.h" GLEXT_CONTENT)
+    string(REPLACE 
+        "LLGL_VA_ARGS(__VA_ARGS__)"
+        ", ##__VA_ARGS__"
+        GLEXT_CONTENT "${GLEXT_CONTENT}")
+    file(WRITE "${llgl_SOURCE_DIR}/sources/Renderer/OpenGL/Ext/GLExtensionRegistry.h" "${GLEXT_CONTENT}")
+    
+    # Patch DbgCore.h
+    file(READ "${llgl_SOURCE_DIR}/sources/Renderer/DebugLayer/DbgCore.h" DBGCORE_CONTENT)
+    string(REPLACE 
+        "LLGL_VA_ARGS(__VA_ARGS__)"
+        ", ##__VA_ARGS__"
+        DBGCORE_CONTENT "${DBGCORE_CONTENT}")
+    file(WRITE "${llgl_SOURCE_DIR}/sources/Renderer/DebugLayer/DbgCore.h" "${DBGCORE_CONTENT}")
+endif()
 
 # =============================================================================
 # Core framework library

@@ -11,6 +11,8 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <Windows.h>
+#elif defined(PLATFORM_LINUX)
+#include <X11/Xlib.h>
 #endif
 
 namespace ToyFrameV {
@@ -29,10 +31,19 @@ bool LLGLSurfaceAdapter::GetNativeHandle(void* nativeHandle, std::size_t nativeH
     
 #ifdef PLATFORM_WINDOWS
     handle->window = static_cast<HWND>(m_window->GetNativeHandle());
+#elif defined(PLATFORM_LINUX)
+    // Linux/X11: Need to set both display and window
+    ::Display* display = XOpenDisplay(nullptr);
+    if (!display) {
+        return false;
+    }
+    handle->x11.display = display;
+    handle->x11.window = reinterpret_cast<::Window>(reinterpret_cast<uintptr_t>(m_window->GetNativeHandle()));
+#elif defined(PLATFORM_MACOS)
+    // macOS: handle->cocoa.nsWindow = m_window->GetNativeHandle();
+    handle->cocoa.nsWindow = m_window->GetNativeHandle();
 #else
     // For other platforms, implement accordingly
-    // Linux: handle->window = static_cast<::Window>(m_window->GetNativeHandle());
-    // macOS: handle->window = static_cast<NSWindow*>(m_window->GetNativeHandle());
     return false;
 #endif
 

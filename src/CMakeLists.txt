@@ -47,6 +47,7 @@ elseif(UNIX)
     list(APPEND CORE_SOURCES
         Platform/Linux/WindowLinux.cpp
         Platform/Linux/InputLinux.cpp
+        Graphics/LLGLSurfaceAdapter.cpp
     )
 endif()
 
@@ -60,20 +61,7 @@ target_include_directories(ToyFrameV PUBLIC
     ${llgl_SOURCE_DIR}/include
 )
 
-# Link LLGL - for static linking we need all renderer modules
-if(EMSCRIPTEN)
-    # WebGL build - minimal LLGL
-    target_link_libraries(ToyFrameV PUBLIC 
-        LLGL 
-    )
-else()
-    target_link_libraries(ToyFrameV PUBLIC 
-        LLGL 
-        LLGL_Null
-    )
-endif()
-
-# Link platform-specific renderers
+# Link platform-specific renderers FIRST
 if(EMSCRIPTEN)
     # WebGL uses LLGL_WebGL (if available) or built-in WebGL support
     if(TARGET LLGL_WebGL)
@@ -81,19 +69,27 @@ if(EMSCRIPTEN)
     endif()
 elseif(WIN32)
     target_link_libraries(ToyFrameV PUBLIC
-        LLGL_Direct3D11
         LLGL_OpenGL
+        LLGL_Direct3D11
         LLGL_DXCommon
+        LLGL_Null
     )
 elseif(APPLE)
     target_link_libraries(ToyFrameV PUBLIC
         LLGL_Metal
     )
 else()
+    # Force link all symbols from LLGL modules on Linux
     target_link_libraries(ToyFrameV PUBLIC
+        -Wl,--whole-archive
         LLGL_OpenGL
+        LLGL_Null
+        -Wl,--no-whole-archive
     )
 endif()
+
+# Link LLGL core AFTER modules
+target_link_libraries(ToyFrameV PUBLIC LLGL)
 
 # Platform-specific link libraries
 if(EMSCRIPTEN)
