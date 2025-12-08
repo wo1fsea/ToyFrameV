@@ -15,13 +15,13 @@ The project provides a convenient script to automatically manage Xvfb:
 
 ```bash
 # Run HelloApp
-./scripts/run_with_xvfb.sh ./build/bin/HelloApp
+./scripts/linux/run_with_xvfb.sh ./build/bin/HelloApp
 
 # Run HelloTriangle
-./scripts/run_with_xvfb.sh ./build/bin/HelloTriangle
+./scripts/linux/run_with_xvfb.sh ./build/bin/HelloTriangle
 
 # Run HelloIO
-./scripts/run_with_xvfb.sh ./build/bin/HelloIO
+./scripts/linux/run_with_xvfb.sh ./build/bin/HelloIO
 ```
 
 ## Method 2: Manual Xvfb Setup

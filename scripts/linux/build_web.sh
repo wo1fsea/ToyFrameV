@@ -7,16 +7,16 @@
 # and is excluded from git.
 #
 # Usage:
-#   ./scripts/build_web.sh              # Build
-#   ./scripts/build_web.sh --clean      # Clean and build
-#   ./scripts/build_web.sh --serve      # Build and start server
-#   ./scripts/build_web.sh --setup      # Only setup emsdk
-#   ./scripts/build_web.sh --target HelloTriangle  # Build specific target
+#   ./scripts/linux/build_web.sh              # Build
+#   ./scripts/linux/build_web.sh --clean      # Clean and build
+#   ./scripts/linux/build_web.sh --serve      # Build and start server
+#   ./scripts/linux/build_web.sh --setup      # Only setup emsdk
+#   ./scripts/linux/build_web.sh --target HelloTriangle  # Build specific target
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 EMSDK_DIR="$PROJECT_DIR/emsdk"
 BUILD_DIR="$PROJECT_DIR/build-web"
 
@@ -160,7 +160,7 @@ build_web() {
     
     echo ""
     echo "  To test locally:"
-    echo -e "    ${YELLOW}./scripts/build_web.sh --serve${NC}"
+    echo -e "    ${YELLOW}./scripts/linux/build_web.sh --serve${NC}"
     echo ""
 }
 

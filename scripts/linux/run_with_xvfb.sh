@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to run ToyFrameV applications with Xvfb (virtual framebuffer)
-# Usage: ./run_with_xvfb.sh <program> [args...]
+# Usage: ./scripts/linux/run_with_xvfb.sh <program> [args...]
 
 # Default display number
 DISPLAY_NUM=99

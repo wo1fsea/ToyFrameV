@@ -82,7 +82,7 @@ Use Xvfb (virtual framebuffer):
 sudo apt-get install -y xvfb
 
 # Method 1: Use the provided script
-./scripts/run_with_xvfb.sh ./build/bin/HelloApp
+./scripts/linux/run_with_xvfb.sh ./build/bin/HelloApp
 
 # Method 2: Manual
 Xvfb :99 -screen 0 1280x720x24 &
