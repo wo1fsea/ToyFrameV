@@ -123,9 +123,6 @@ private:
         // Read pixels from RenderTexture (synchronous)
         PixelData pixels = m_renderTexture->ReadPixels();
 
-        TOYFRAMEV_LOG_INFO("ReadPixels returned: valid={}, size={}",
-                           pixels.IsValid(), pixels.data.size());
-
         if (pixels.IsValid()) {
             if (pixels.SaveToBMP(filename)) {
               TOYFRAMEV_LOG_INFO("Screenshot queued/saved: {} ({}x{})",
@@ -144,12 +141,9 @@ private:
 #ifdef __EMSCRIPTEN__
       // On WebGL, download all queued screenshots as a ZIP
       size_t count = PixelData::GetPendingCount();
-      TOYFRAMEV_LOG_INFO("Pending images count: {}", count);
       if (count > 0) {
         TOYFRAMEV_LOG_INFO("Downloading {} screenshots as ZIP...", count);
         PixelData::DownloadAllAsZip("screenshots.zip");
-      } else {
-        TOYFRAMEV_LOG_WARN("No screenshots queued for download!");
       }
 #else
       TOYFRAMEV_LOG_INFO("Screenshots saved to current directory.");

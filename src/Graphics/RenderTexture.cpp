@@ -308,9 +308,6 @@ void PixelData::DownloadAllAsZip(const std::string &zipFilename) {
         eocdView.setUint16(20, 0, true);          // Comment length
         zip.set(eocd, zipOffset);
 
-        console.log('ZIP created with ' + files.length + ' files, size: ' +
-                    zip.length + ' bytes');
-
         // Use the global download function defined in template.html
         // This uses requestAnimationFrame to properly escape WASM context
         var filename = UTF8ToString($2);

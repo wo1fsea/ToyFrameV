@@ -190,8 +190,6 @@
         
         // Global download function for Emscripten to call
         window.ToyFrameV_DownloadBlob = function(data, filename) {
-            console.log('ToyFrameV_DownloadBlob called: ' + filename + ', size: ' + data.length);
-            
             // Store blob for later download via button
             var blob = new Blob([data], { type: 'application/octet-stream' });
             window.ToyFrameV_PendingDownload = { blob: blob, filename: filename };
@@ -227,7 +225,6 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }, 100);
-            console.log('Auto download attempted for: ' + filename);
         };
     </script>
     
