@@ -7,14 +7,12 @@
 
 #include "ToyFrameV/Graphics/Types.h"
 #include <functional>
-#include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace ToyFrameV {
 
 class Graphics;
-class RenderTextureImpl;
 
 /**
  * @brief RenderTexture description
@@ -150,15 +148,15 @@ public:
      */
     void CancelReadback();
 
-    // Internal
-    RenderTextureImpl* GetImpl() const { return m_impl.get(); }
+    // Internal - for backend access
+    void *GetBackendHandle() const { return m_backendHandle; }
 
-private:
+  private:
     friend class Graphics;
     RenderTexture(Graphics* graphics);
     bool Initialize(const RenderTextureDesc& desc);
 
-    std::unique_ptr<RenderTextureImpl> m_impl;
+    void *m_backendHandle = nullptr;
     Graphics* m_graphics = nullptr;
     uint32_t m_width = 0;
     uint32_t m_height = 0;

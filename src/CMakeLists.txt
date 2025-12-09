@@ -7,6 +7,7 @@ set(CORE_SOURCES
     Core/Log.cpp
     Graphics/Graphics.cpp
     Graphics/RenderTexture.cpp
+    Graphics/Backend/LLGL/LLGLBackend.cpp
     System/SystemManager.cpp
     System/WindowSystem.cpp
     System/GraphicsSystem.cpp
@@ -26,7 +27,7 @@ elseif(WIN32)
     list(APPEND CORE_SOURCES
         Platform/Windows/WindowWindows.cpp
         Platform/Windows/InputWindows.cpp
-        Graphics/LLGLSurfaceAdapter.cpp
+        Graphics/Backend/LLGL/LLGLSurfaceAdapter.cpp
     )
 elseif(APPLE)
     if(IOS)
@@ -49,7 +50,7 @@ elseif(UNIX)
     list(APPEND CORE_SOURCES
         Platform/Linux/WindowLinux.cpp
         Platform/Linux/InputLinux.cpp
-        Graphics/LLGLSurfaceAdapter.cpp
+        Graphics/Backend/LLGL/LLGLSurfaceAdapter.cpp
     )
 endif()
 
@@ -61,6 +62,11 @@ target_include_directories(ToyFrameV PUBLIC
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party
     ${llgl_SOURCE_DIR}/include
+)
+
+# Private include for backend implementation
+target_include_directories(ToyFrameV PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # Link platform-specific renderers FIRST

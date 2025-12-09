@@ -182,7 +182,10 @@ public:
     // Internal - get implementation
     GraphicsImpl* GetImpl() const { return m_impl.get(); }
 
-private:
+    // Internal - get backend interface
+    class IGraphicsBackend *GetBackend() const;
+
+  private:
     Graphics() = default;
     bool Initialize(Window* window, const GraphicsConfig& config);
 
