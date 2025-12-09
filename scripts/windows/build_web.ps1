@@ -8,10 +8,10 @@
     and is excluded from git.
 
 .EXAMPLE
-    .\scripts\build_web.ps1
-    .\scripts\build_web.ps1 -Clean
-    .\scripts\build_web.ps1 -Serve
-    .\scripts\build_web.ps1 -Target HelloTriangle
+    .\scripts\windows\build_web.ps1
+    .\scripts\windows\build_web.ps1 -Clean
+    .\scripts\windows\build_web.ps1 -Serve
+    .\scripts\windows\build_web.ps1 -Target HelloTriangle
 #>
 
 param(
@@ -183,7 +183,7 @@ function Build-Web {
     
     Write-Host ""
     Write-Host "  To test locally:" -ForegroundColor White
-    Write-Host "    .\scripts\build_web.ps1 -Serve" -ForegroundColor Yellow
+    Write-Host "    .\scripts\windows\build_web.ps1 -Serve" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -220,7 +220,7 @@ try {
     Setup-Emsdk
     
     if ($Setup) {
-        Write-Host "Setup complete. Use .\build_web.ps1 to build." -ForegroundColor Green
+        Write-Host "Setup complete. Use .\scripts\windows\build_web.ps1 to build." -ForegroundColor Green
         exit 0
     }
     

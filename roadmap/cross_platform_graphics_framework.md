@@ -22,7 +22,10 @@ ToyFrameV is a lightweight cross-platform graphics framework based on LLGL, supp
 ToyFrameV/
 ├── CMakeLists.txt              # Main CMake configuration
 ├── cmake/Platform.cmake        # Platform detection
-├── scripts/build_web.ps1/sh    # Web build scripts
+├── scripts/                    # Build scripts
+│   ├── windows/build.ps1       # Windows build
+│   ├── windows/build_web.ps1   # WebGL build (Windows)
+│   └── linux/build_web.sh      # WebGL build (Linux)
 ├── include/ToyFrameV/          # Public headers
 │   ├── App.h                   # Application lifecycle
 │   ├── Window.h                # Window abstraction

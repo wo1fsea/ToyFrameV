@@ -28,15 +28,15 @@ emsdk_env.bat
 
 ```bash
 cd ToyFrameV
-chmod +x scripts/build_web.sh
-./scripts/build_web.sh
+chmod +x scripts/linux/build_web.sh
+./scripts/linux/build_web.sh
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
 cd ToyFrameV
-.\scripts\build_web.ps1
+.\scripts\windows\build_web.ps1
 ```
 
 ### Manual Build

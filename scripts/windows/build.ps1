@@ -7,10 +7,10 @@
     using CMake and Visual Studio.
 
 .EXAMPLE
-    .\build_windows.ps1
-    .\build_windows.ps1 -Clean
-    .\build_windows.ps1 -Config Debug
-    .\build_windows.ps1 -Target HelloTriangle
+    .\scripts\windows\build.ps1
+    .\scripts\windows\build.ps1 -Clean
+    .\scripts\windows\build.ps1 -Config Debug
+    .\scripts\windows\build.ps1 -Target HelloTriangle
 #>
 
 param(
