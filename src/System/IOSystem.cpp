@@ -1,9 +1,9 @@
 #include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/App.h"
 #include "ToyFrameV/Platform.h"
+#include "ToyFrameV/Core/Log.h"
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #ifdef PLATFORM_WINDOWS
@@ -72,11 +72,11 @@ bool IOSystem::Initialize(App *app) {
     m_networkAvailable = true;
 #endif
 
-    std::cout << "IOSystem initialized:" << std::endl;
-    std::cout << "  Assets: " << m_assetsPath << std::endl;
-    std::cout << "  Documents: " << m_documentsPath << std::endl;
-    std::cout << "  Cache: " << m_cachePath << std::endl;
-    std::cout << "  Temp: " << m_tempPath << std::endl;
+    TOYFRAMEV_LOG_DEBUG("IOSystem initialized");
+    TOYFRAMEV_LOG_DEBUG("  Assets: {}", m_assetsPath);
+    TOYFRAMEV_LOG_DEBUG("  Documents: {}", m_documentsPath);
+    TOYFRAMEV_LOG_DEBUG("  Cache: {}", m_cachePath);
+    TOYFRAMEV_LOG_DEBUG("  Temp: {}", m_tempPath);
 
     return true;
 }

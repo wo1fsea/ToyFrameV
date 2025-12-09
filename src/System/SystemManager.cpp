@@ -1,6 +1,6 @@
 #include "ToyFrameV/System.h"
+#include "ToyFrameV/Core/Log.h"
 #include <algorithm>
-#include <iostream>
 
 namespace ToyFrameV {
 
@@ -24,7 +24,7 @@ bool SystemManager::InitializeAll(App* app) {
 
     for (auto& system : m_systems) {
         if (!system->Initialize(app)) {
-            std::cerr << "Failed to initialize system: " << system->GetName() << std::endl;
+            TOYFRAMEV_LOG_ERROR("Failed to initialize system: {}", system->GetName());
             // Shutdown already initialized systems in reverse order
             for (auto it = m_systems.rbegin(); it != m_systems.rend(); ++it) {
                 if (it->get() == system.get()) break;

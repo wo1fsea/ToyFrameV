@@ -8,6 +8,7 @@
 
 #include "ToyFrameV/Graphics.h"
 #include "ToyFrameV/Graphics/RenderTexture.h"
+#include "ToyFrameV/Core/Log.h"
 
 // LLGLSurfaceAdapter is only used on desktop platforms with native windows
 // WebGL uses LLGL's built-in canvas management
@@ -18,7 +19,6 @@
 #include <LLGL/LLGL.h>
 #include <LLGL/Utils/TypeNames.h>
 #include <LLGL/Utils/VertexFormat.h>
-#include <iostream>
 #include <algorithm>
 #include <vector>
 
@@ -168,7 +168,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
         }
     }
 
-    std::cout << "Initializing graphics: " << moduleName << std::endl;
+    TOYFRAMEV_LOG_INFO("Initializing graphics: {}", moduleName);
 
     // Load render system
     LLGL::RenderSystemDescriptor desc;
@@ -180,7 +180,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     LLGL::Report report;
     m_impl->renderSystemPtr = LLGL::RenderSystem::Load(desc, &report);
     if (!m_impl->renderSystemPtr) {
-        std::cerr << "Failed to load render system: " << report.GetText() << std::endl;
+        TOYFRAMEV_LOG_ERROR("Failed to load render system: {}", report.GetText());
         return false;
     }
     m_impl->renderSystem = m_impl->renderSystemPtr.get();
@@ -191,7 +191,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
 
 #if defined(__EMSCRIPTEN__) || defined(PLATFORM_WEB)
     // WebGL: LLGL manages the canvas directly, ignore external window parameter
-    std::cout << "  Using WebGL canvas" << std::endl;
+    TOYFRAMEV_LOG_DEBUG("Using WebGL canvas");
     swapChainDesc.resolution = {800, 600}; // Will be overridden by canvas size
     m_impl->swapChain = m_impl->renderSystem->CreateSwapChain(swapChainDesc);
     m_impl->ownsWindow = true;
@@ -199,7 +199,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     // Desktop platforms: support external window via LLGLSurfaceAdapter
     if (window) {
       // Use external ToyFrameV window via adapter
-      std::cout << "  Using external window" << std::endl;
+      TOYFRAMEV_LOG_DEBUG("Using external window");
       m_impl->externalSurface = CreateLLGLSurface(window);
       swapChainDesc.resolution = {
           static_cast<std::uint32_t>(window->GetWidth()),
@@ -209,7 +209,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
       m_impl->ownsWindow = false;
     } else {
       // Let LLGL create its own window
-      std::cout << "  Creating LLGL window" << std::endl;
+      TOYFRAMEV_LOG_DEBUG("Creating LLGL window");
       swapChainDesc.resolution = {800, 600};
       m_impl->swapChain = m_impl->renderSystem->CreateSwapChain(swapChainDesc);
       m_impl->ownsWindow = true;
@@ -224,7 +224,7 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
 #endif
 
     if (!m_impl->swapChain) {
-      std::cerr << "Failed to create swap chain" << std::endl;
+      TOYFRAMEV_LOG_ERROR("Failed to create swap chain");
       return false;
     }
 
@@ -240,8 +240,8 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     m_backendName = info.rendererName;
     m_deviceName = info.deviceName;
 
-    std::cout << "  Renderer: " << m_backendName << std::endl;
-    std::cout << "  Device: " << m_deviceName << std::endl;
+    TOYFRAMEV_LOG_INFO("Renderer: {}", m_backendName);
+    TOYFRAMEV_LOG_INFO("Device: {}", m_deviceName);
 
     return true;
 }
@@ -345,7 +345,7 @@ std::unique_ptr<Shader> Graphics::CreateShader(const ShaderDesc& desc) {
     LLGL::Shader* vertexShader = rs->CreateShader(vsDesc);
     if (const auto* report = vertexShader->GetReport()) {
         if (report->HasErrors()) {
-            std::cerr << "Vertex shader error: " << report->GetText() << std::endl;
+            TOYFRAMEV_LOG_ERROR("Vertex shader error: {}", report->GetText());
             return nullptr;
         }
     }
@@ -361,7 +361,7 @@ std::unique_ptr<Shader> Graphics::CreateShader(const ShaderDesc& desc) {
     LLGL::Shader* fragmentShader = rs->CreateShader(fsDesc);
     if (const auto* report = fragmentShader->GetReport()) {
         if (report->HasErrors()) {
-            std::cerr << "Fragment shader error: " << report->GetText() << std::endl;
+            TOYFRAMEV_LOG_ERROR("Fragment shader error: {}", report->GetText());
             return nullptr;
         }
     }
@@ -375,7 +375,7 @@ std::unique_ptr<Shader> Graphics::CreateShader(const ShaderDesc& desc) {
 
 std::unique_ptr<Pipeline> Graphics::CreatePipeline(const PipelineDesc& desc) {
     if (!desc.shader) {
-        std::cerr << "Pipeline creation failed: shader is null" << std::endl;
+        TOYFRAMEV_LOG_ERROR("Pipeline creation failed: shader is null");
         return nullptr;
     }
 
@@ -409,7 +409,7 @@ std::unique_ptr<Pipeline> Graphics::CreatePipeline(const PipelineDesc& desc) {
     LLGL::PipelineState* pipelineState = m_impl->renderSystem->CreatePipelineState(pipelineDesc);
     if (const auto* report = pipelineState->GetReport()) {
         if (report->HasErrors()) {
-            std::cerr << "Pipeline error: " << report->GetText() << std::endl;
+            TOYFRAMEV_LOG_ERROR("Pipeline error: {}", report->GetText());
             return nullptr;
         }
     }

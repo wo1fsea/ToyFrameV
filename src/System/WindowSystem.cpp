@@ -1,7 +1,7 @@
 #include "ToyFrameV/WindowSystem.h"
 #include "ToyFrameV/App.h"
 #include "ToyFrameV/Input.h"
-#include <iostream>
+#include "ToyFrameV/Core/Log.h"
 
 namespace ToyFrameV {
 
@@ -26,14 +26,14 @@ bool WindowSystem::Initialize(App* app) {
 #if defined(__EMSCRIPTEN__) || defined(PLATFORM_WEB)
     // On Web platform, LLGL manages the canvas directly
     // WindowSystem is still registered for API consistency but doesn't create a window
-    std::cout << "WindowSystem: Web platform - LLGL manages canvas" << std::endl;
+    TOYFRAMEV_LOG_DEBUG("WindowSystem: Web platform - LLGL manages canvas");
     m_closeRequested = false;
     return true;
 #else
     // Create the window
     m_window = Window::Create(m_config);
     if (!m_window) {
-        std::cerr << "WindowSystem: Failed to create window" << std::endl;
+        TOYFRAMEV_LOG_ERROR("WindowSystem: Failed to create window");
         return false;
     }
 

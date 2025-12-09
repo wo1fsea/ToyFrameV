@@ -18,7 +18,7 @@
 #include <Windows.h>
 #include <windowsx.h>  // For GET_X_LPARAM, GET_Y_LPARAM
 #include <unordered_map>
-#include <iostream>
+#include "ToyFrameV/Core/Log.h"
 
 namespace ToyFrameV {
 
@@ -122,7 +122,7 @@ bool WindowWindows::RegisterWindowClass() {
 
     if (!RegisterClassExW(&wc)) {
         DWORD error = GetLastError();
-        std::cerr << "RegisterClassExW failed with error: " << error << std::endl;
+        TOYFRAMEV_LOG_ERROR("RegisterClassExW failed with error: {}", error);
         return false;
     }
 
@@ -176,7 +176,7 @@ bool WindowWindows::CreateNativeWindow(const WindowConfig& config) {
 
     if (!m_hwnd) {
         DWORD error = GetLastError();
-        std::cerr << "CreateWindowExW failed with error: " << error << std::endl;
+        TOYFRAMEV_LOG_ERROR("CreateWindowExW failed with error: {}", error);
         return false;
     }
 

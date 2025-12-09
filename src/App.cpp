@@ -6,8 +6,8 @@
 #include "ToyFrameV/InputSystem.h"
 #include "ToyFrameV/TimerSystem.h"
 #include "ToyFrameV/WindowSystem.h"
+#include "ToyFrameV/Core/Log.h"
 #include <chrono>
-#include <iostream>
 #include <sstream>
 
 #ifdef __EMSCRIPTEN__
@@ -110,14 +110,14 @@ int App::Run() {
 
   // Initialize all systems
   if (!m_systems.InitializeAll(this)) {
-    std::cerr << "Failed to initialize systems" << std::endl;
+    TOYFRAMEV_LOG_ERROR("Failed to initialize systems");
     m_systems.ShutdownAll();
     return -1;
   }
 
     // User initialization
     if (!OnInit()) {
-        std::cerr << "Failed to initialize application" << std::endl;
+        TOYFRAMEV_LOG_ERROR("Failed to initialize application");
         m_systems.ShutdownAll();
         return -1;
     }

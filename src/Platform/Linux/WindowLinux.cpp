@@ -12,7 +12,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <cstring>
-#include <iostream>
+#include "ToyFrameV/Core/Log.h"
 
 namespace ToyFrameV {
 
@@ -62,7 +62,7 @@ WindowLinux::WindowLinux(const WindowConfig& config)
     // Open connection to X server
     m_display = XOpenDisplay(nullptr);
     if (!m_display) {
-        std::cerr << "Failed to open X display" << std::endl;
+        TOYFRAMEV_LOG_ERROR("Failed to open X display");
         return;
     }
 
@@ -80,7 +80,7 @@ WindowLinux::WindowLinux(const WindowConfig& config)
     );
 
     if (!m_window) {
-        std::cerr << "Failed to create X window" << std::endl;
+        TOYFRAMEV_LOG_ERROR("Failed to create X window");
         XCloseDisplay(m_display);
         m_display = nullptr;
         return;

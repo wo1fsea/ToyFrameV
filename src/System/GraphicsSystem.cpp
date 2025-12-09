@@ -1,7 +1,7 @@
 #include "ToyFrameV/GraphicsSystem.h"
 #include "ToyFrameV/WindowSystem.h"
 #include "ToyFrameV/App.h"
-#include <iostream>
+#include "ToyFrameV/Core/Log.h"
 
 namespace ToyFrameV {
 
@@ -44,13 +44,12 @@ bool GraphicsSystem::Initialize(App* app) {
     // If window is nullptr, Graphics will create its own LLGL window
     m_graphics = Graphics::Create(window, m_config);
     if (!m_graphics) {
-        std::cerr << "GraphicsSystem: Failed to create graphics context" << std::endl;
+        TOYFRAMEV_LOG_ERROR("GraphicsSystem: Failed to create graphics context");
         return false;
     }
 
-    std::cout << "GraphicsSystem: Initialized with " 
-              << (window ? "external ToyFrameV window" : "LLGL-managed window") 
-              << std::endl;
+    TOYFRAMEV_LOG_INFO("GraphicsSystem: Initialized with {}", 
+              (window ? "external ToyFrameV window" : "LLGL-managed window"));
 
     return true;
 }
