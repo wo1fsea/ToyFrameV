@@ -4,6 +4,7 @@
 #include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/Input.h"
 #include "ToyFrameV/InputSystem.h"
+#include "ToyFrameV/TimerSystem.h"
 #include "ToyFrameV/WindowSystem.h"
 #include <chrono>
 #include <iostream>
@@ -96,6 +97,9 @@ int App::Run() {
 
   // IOSystem - handles file I/O operations (Priority: Platform + 10)
   m_systems.AddSystem<IOSystem>();
+
+  // TimerSystem - handles timed callbacks (Priority: Logic = 50)
+  m_systems.AddSystem<TimerSystem>();
 
   // InputSystem - handles input state per frame (Priority: Input = 100)
   m_systems.AddSystem<InputSystem>();

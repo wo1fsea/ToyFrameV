@@ -20,6 +20,7 @@
 #include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/InputSystem.h"
 #include "ToyFrameV/System.h"
+#include "ToyFrameV/TimerSystem.h"
 #include "ToyFrameV/WindowSystem.h"
 #include "ToyFrameV/Core/Log.h"
 #include "ToyFrameV/Core/Threading.h"

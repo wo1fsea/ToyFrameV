@@ -11,6 +11,7 @@ set(CORE_SOURCES
     System/GraphicsSystem.cpp
     System/InputSystem.cpp
     System/IOSystem.cpp
+    System/TimerSystem.cpp
 )
 
 # Platform-specific window and input sources

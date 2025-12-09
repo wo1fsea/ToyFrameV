@@ -35,6 +35,7 @@ ToyFrameV/
 │   ├── GraphicsSystem.h        # Graphics subsystem
 │   ├── InputSystem.h           # Input subsystem
 │   ├── IOSystem.h              # I/O subsystem (file/network)
+│   ├── TimerSystem.h           # Timer subsystem
 │   └── Core/                   # Core utilities
 │       ├── Log.h               # Logging API
 │       └── Threading.h         # ThreadPool/Future and sync primitives
@@ -51,7 +52,8 @@ ToyFrameV/
 │   │   ├── WindowSystem.cpp
 │   │   ├── GraphicsSystem.cpp
 │   │   ├── InputSystem.cpp
-│   │   └── IOSystem.cpp        # I/O system implementation
+│   │   ├── IOSystem.cpp        # I/O system implementation
+│   │   └── TimerSystem.cpp     # Timer system implementation
 │   └── Platform/
 │       ├── Windows/PlatformWindows.cpp
 │       └── Web/PlatformWeb.cpp
@@ -59,7 +61,8 @@ ToyFrameV/
 │   ├── HelloApp/               # Basic application sample
 │   ├── HelloTriangle/          # Triangle rendering sample
 │   ├── HelloIO/                # I/O system sample
-│   └── HelloThreadLog/         # ThreadPool + Log sample
+│   ├── HelloThreadLog/         # ThreadPool + Log sample
+│   └── HelloTimer/             # Timer system sample
 ├── third_party/fmt/core.h      # Minimal header-only fmt-style formatter
 ├── web/template.html           # Web build template
 └── docs/WebGL_Build.md         # Web build documentation
@@ -252,7 +255,16 @@ src/System/ConsoleSystem.cpp
 #endif
 ```
 
-### 📋 Stage 9: System Architecture Enhancement (TODO)
+### 📋 Stage 9: System Architecture Enhancement (In Progress)
+- [x] **TimerSystem** (`TimerSystem.h`, `TimerSystem.cpp`)
+  - [x] One-shot timer: `SetTimeout(delay, callback)` returns `TimerId`
+  - [x] Repeating timer: `SetInterval(interval, callback)` returns `TimerId`
+  - [x] Timer control: `Cancel(id)`, `Pause(id)`, `Resume(id)`
+  - [x] Query: `IsActive(id)`, `GetRemaining(id)`, `CancelAll()`
+  - [x] Frame-driven updates in `Update(deltaTime)`
+  - [x] Automatic cleanup of completed one-shot timers
+  - [x] Priority: 50 (before InputSystem)
+  - [x] `HelloTimer` sample demonstrating all features
 - [ ] **Event Bus System**
   - [ ] `EventBus` class with `Publish<T>()` / `Subscribe<T>()`
   - [ ] Decouple system-to-system communication
@@ -313,6 +325,8 @@ src/System/ConsoleSystem.cpp
 │  Priority 0    │ WindowSystem   │ Platform events           │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 10   │ IOSystem       │ File/Network I/O          │
+├─────────────────────────────────────────────────────────────┤
+│  Priority 50   │ TimerSystem    │ Timed callbacks           │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 100  │ InputSystem    │ Input state updates       │
 ├─────────────────────────────────────────────────────────────┤
@@ -408,4 +422,4 @@ Build outputs are located in `build-web/bin/`. Use a local HTTP server to run th
 
 ---
 
-*Last updated: December 7, 2025*
+*Last updated: December 9, 2025*
