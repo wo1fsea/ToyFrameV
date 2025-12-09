@@ -6,6 +6,7 @@ set(CORE_SOURCES
     Core/Threading.cpp
     Core/Log.cpp
     Graphics/Graphics.cpp
+    Graphics/RenderTexture.cpp
     System/SystemManager.cpp
     System/WindowSystem.cpp
     System/GraphicsSystem.cpp

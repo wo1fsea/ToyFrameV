@@ -28,7 +28,14 @@ ToyFrameV/
 │   ├── Window.h                # Window abstraction
 │   ├── Input.h                 # Input system
 │   ├── KeyCodes.h              # Key code definitions
-│   ├── Graphics.h              # Graphics rendering
+│   ├── Graphics.h              # Graphics aggregate header
+│   ├── Graphics/               # Graphics submodules
+│   │   ├── Types.h             # Color, Format, VertexLayout
+│   │   ├── Buffer.h            # Buffer class
+│   │   ├── Shader.h            # Shader class
+│   │   ├── Pipeline.h          # Pipeline class
+│   │   ├── RenderTexture.h     # Offscreen render target
+│   │   └── Context.h           # Graphics main class
 │   ├── Platform.h              # Platform abstraction
 │   ├── System.h                # System base class
 │   ├── WindowSystem.h          # Window subsystem
@@ -46,7 +53,9 @@ ToyFrameV/
 │   ├── Core/Log.cpp            # Logging implementation
 │   ├── Window/WindowWindows.cpp
 │   ├── Input/InputWindows.cpp
-│   ├── Graphics/Graphics.cpp   # LLGL renderer wrapper
+│   ├── Graphics/               # Graphics implementations
+│   │   ├── Graphics.cpp        # LLGL renderer wrapper
+│   │   └── RenderTexture.cpp   # Offscreen render target
 │   ├── System/                 # System implementations
 │   │   ├── SystemManager.cpp   # System lifecycle management
 │   │   ├── WindowSystem.cpp
@@ -62,7 +71,8 @@ ToyFrameV/
 │   ├── HelloTriangle/          # Triangle rendering sample
 │   ├── HelloIO/                # I/O system sample
 │   ├── HelloThreadLog/         # ThreadPool + Log sample
-│   └── HelloTimer/             # Timer system sample
+│   ├── HelloTimer/             # Timer system sample
+│   └── HelloRenderTexture/     # Offscreen rendering sample
 ├── third_party/fmt/core.h      # Minimal header-only fmt-style formatter
 ├── web/template.html           # Web build template
 └── docs/WebGL_Build.md         # Web build documentation
@@ -285,7 +295,18 @@ src/System/ConsoleSystem.cpp
   - [ ] X11/Wayland window
   - [ ] Input event handling
 
-### 📋 Stage 11: Feature Enhancement
+### 📋 Stage 11: Feature Enhancement (In Progress)
+- [x] **RenderTexture System** (`Graphics/RenderTexture.h`, `RenderTexture.cpp`)
+  - [x] Offscreen render target creation
+  - [x] `SetRenderTarget()` / `GetRenderTarget()` API
+  - [x] Synchronous pixel readback (`ReadPixels()`)
+  - [x] Async readback API (`ReadPixelsAsync()`) for WebGL
+  - [x] BMP file export (`SaveToBMP()`)
+  - [x] `HelloRenderTexture` sample
+- [x] **Graphics Module Refactor**
+  - [x] Split `Graphics.h` into `Graphics/` subdirectory
+  - [x] `Types.h`, `Buffer.h`, `Shader.h`, `Pipeline.h`, `RenderTexture.h`, `Context.h`
+  - [x] Aggregate `Graphics.h` includes all submodules
 - [ ] **Texture System**
   - [ ] Texture loading (PNG/JPG)
   - [ ] Texture samplers

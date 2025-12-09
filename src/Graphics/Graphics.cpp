@@ -7,6 +7,7 @@
  */
 
 #include "ToyFrameV/Graphics.h"
+#include "ToyFrameV/Graphics/RenderTexture.h"
 
 // LLGLSurfaceAdapter is only used on desktop platforms with native windows
 // WebGL uses LLGL's built-in canvas management
@@ -19,6 +20,7 @@
 #include <LLGL/Utils/VertexFormat.h>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 namespace ToyFrameV {
 
@@ -26,7 +28,7 @@ namespace ToyFrameV {
 // VertexLayout Implementation
 // ============================================================================
 
-static uint32_t GetFormatSize(Format format) {
+uint32_t GetFormatSize(Format format) {
     switch (format) {
         case Format::Float:      return 4;
         case Format::Float2:     return 8;
@@ -91,6 +93,12 @@ public:
     Window *toyFrameWindow = nullptr; // Reference to external ToyFrameV window
     bool inRenderPass = false;
     bool ownsWindow = false; // True if LLGL created the window
+    
+    // Current render target (nullptr = screen)
+    RenderTexture* currentRenderTarget = nullptr;
+    
+    // Pending async readback requests from all RenderTextures
+    std::vector<RenderTexture*> renderTexturesWithPendingReadbacks;
 
     ~GraphicsImpl() {
         if (renderSystemPtr) {
@@ -107,6 +115,11 @@ public:
         return format;
     }
 };
+
+// Helper function for RenderTexture to access LLGL render system
+LLGL::RenderSystem* GetLLGLRenderSystem(GraphicsImpl* impl) {
+    return impl ? impl->renderSystem : nullptr;
+}
 
 // ============================================================================
 // Graphics Implementation
@@ -233,11 +246,25 @@ bool Graphics::Initialize(Window* window, const GraphicsConfig& config) {
     return true;
 }
 
+// Forward declaration for RenderTextureImpl access
+class RenderTextureImpl;
+extern LLGL::RenderTarget* GetLLGLRenderTarget(RenderTextureImpl* impl);
+
 void Graphics::BeginFrame() {
     m_impl->commandBuffer->Begin();
-    m_impl->commandBuffer->SetViewport(m_impl->swapChain->GetResolution());
-    // Start render pass at frame begin
-    m_impl->commandBuffer->BeginRenderPass(*m_impl->swapChain);
+    
+    // Begin render pass to current target (screen or RenderTexture)
+    if (m_currentRenderTarget) {
+        auto* rtImpl = m_currentRenderTarget->GetImpl();
+        auto* llglRT = GetLLGLRenderTarget(rtImpl);
+        if (llglRT) {
+            m_impl->commandBuffer->SetViewport(llglRT->GetResolution());
+            m_impl->commandBuffer->BeginRenderPass(*llglRT);
+        }
+    } else {
+        m_impl->commandBuffer->SetViewport(m_impl->swapChain->GetResolution());
+        m_impl->commandBuffer->BeginRenderPass(*m_impl->swapChain);
+    }
     m_impl->inRenderPass = true;
 }
 
@@ -247,7 +274,11 @@ void Graphics::EndFrame() {
         m_impl->inRenderPass = false;
     }
     m_impl->commandBuffer->End();
-    m_impl->swapChain->Present();
+    
+    // Only present if rendering to screen
+    if (!m_currentRenderTarget) {
+        m_impl->swapChain->Present();
+    }
 }
 
 void Graphics::Clear(const Color& color) {
@@ -441,6 +472,55 @@ bool Graphics::ProcessEvents() {
 
 bool Graphics::IsValid() const {
   return m_impl && m_impl->swapChain != nullptr;
+}
+
+// ============================================================================
+// RenderTexture Support
+// ============================================================================
+
+std::unique_ptr<RenderTexture> Graphics::CreateRenderTexture(const RenderTextureDesc& desc) {
+    auto rt = std::unique_ptr<RenderTexture>(new RenderTexture(this));
+    if (!rt->Initialize(desc)) {
+        return nullptr;
+    }
+    return rt;
+}
+
+void Graphics::SetRenderTarget(RenderTexture* rt) {
+    // If we're in a render pass, end it first
+    if (m_impl->inRenderPass) {
+        m_impl->commandBuffer->EndRenderPass();
+        m_impl->inRenderPass = false;
+    }
+    
+    m_currentRenderTarget = rt;
+    m_impl->currentRenderTarget = rt;
+    
+    // Begin new render pass to the new target
+    if (rt) {
+        auto* rtImpl = rt->GetImpl();
+        auto* llglRT = GetLLGLRenderTarget(rtImpl);
+        if (llglRT) {
+            m_impl->commandBuffer->SetViewport(llglRT->GetResolution());
+            m_impl->commandBuffer->BeginRenderPass(*llglRT);
+            m_impl->inRenderPass = true;
+        }
+    } else {
+        // Back to screen
+        m_impl->commandBuffer->SetViewport(m_impl->swapChain->GetResolution());
+        m_impl->commandBuffer->BeginRenderPass(*m_impl->swapChain);
+        m_impl->inRenderPass = true;
+    }
+}
+
+RenderTexture* Graphics::GetRenderTarget() const {
+    return m_currentRenderTarget;
+}
+
+void Graphics::ProcessReadbacks() {
+    // Process async readback callbacks
+    // For now, this is a stub - async readback will be implemented
+    // when we add proper fence/query support
 }
 
 // ============================================================================
