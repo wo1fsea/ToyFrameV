@@ -23,7 +23,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectDir = Split-Path -Parent $ScriptDir
+$ProjectDir = Split-Path -Parent (Split-Path -Parent $ScriptDir)
 $EmsdkDir = Join-Path $ProjectDir "emsdk"
 $BuildDir = Join-Path $ProjectDir "build-web"
 

@@ -140,12 +140,12 @@ Update roadmap file based on current implementation status.
 
 ```powershell
 # Windows
-.\scripts\build_windows.ps1 -Target HelloTriangle
+.\scripts\windows\build.ps1 -Target HelloTriangle
 
 # Web
-.\scripts\build_web.ps1 -Target HelloTriangle
+.\scripts\windows\build_web.ps1 -Target HelloTriangle
 
 # Clean rebuild
-.\scripts\build_windows.ps1 -Clean
-.\scripts\build_web.ps1 -Clean
+.\scripts\windows\build.ps1 -Clean
+.\scripts\windows\build_web.ps1 -Clean
 ```
