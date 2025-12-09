@@ -119,6 +119,7 @@
     <div class="info">
         <p>WebGL 2.0 | ToyFrameV Graphics Framework</p>
         <p>Press F11 for fullscreen</p>
+        <button id="download-btn" style="display:none; margin-top:10px; padding:10px 20px; font-size:16px; background:#00d4ff; color:#000; border:none; border-radius:5px; cursor:pointer;">Download</button>
     </div>
 
     <script>
@@ -183,6 +184,51 @@
                 }
             }
         });
+        
+        // Global download state
+        window.ToyFrameV_PendingDownload = null;
+        
+        // Global download function for Emscripten to call
+        window.ToyFrameV_DownloadBlob = function(data, filename) {
+            console.log('ToyFrameV_DownloadBlob called: ' + filename + ', size: ' + data.length);
+            
+            // Store blob for later download via button
+            var blob = new Blob([data], { type: 'application/octet-stream' });
+            window.ToyFrameV_PendingDownload = { blob: blob, filename: filename };
+            
+            // Show download button
+            var btn = document.getElementById('download-btn');
+            if (btn) {
+                btn.textContent = 'Download ' + filename + ' (' + (data.length / 1024).toFixed(1) + ' KB)';
+                btn.style.display = 'block';
+                btn.onclick = function() {
+                    if (window.ToyFrameV_PendingDownload) {
+                        var url = URL.createObjectURL(window.ToyFrameV_PendingDownload.blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = window.ToyFrameV_PendingDownload.filename;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        btn.style.display = 'none';
+                        window.ToyFrameV_PendingDownload = null;
+                    }
+                };
+            }
+            
+            // Also try automatic download
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            console.log('Auto download attempted for: ' + filename);
+        };
     </script>
     
     {{{ SCRIPT }}}

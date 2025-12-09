@@ -1,12 +1,13 @@
 /**
  * @file main.cpp
  * @brief HelloRenderTexture - Demonstrates offscreen rendering and BMP export
- * 
+ *
  * This sample shows how to:
  * - Create a RenderTexture for offscreen rendering
  * - Render to the texture instead of screen
  * - Read back pixel data and save to BMP file
  * - Use TimerSystem to schedule automatic screenshots
+ * - On WebGL: Download all screenshots as a ZIP file
  */
 
 #include <ToyFrameV.h>
@@ -52,24 +53,25 @@ protected:
         // Use TimerSystem to take screenshots every 2 seconds
         auto* timerSystem = GetSystem<TimerSystem>();
         if (timerSystem) {
-            // Take first screenshot after 1 second
-            timerSystem->SetTimeout(1.0, [this]() {
-                TakeScreenshot("screenshot_1.bmp");
-            });
+          // Take screenshots at 1s, 3s, 5s, 7s, 9s
+          const int numScreenshots = 5;
+          for (int i = 0; i < numScreenshots; ++i) {
+            double time = 1.0 + i * 2.0; // 1, 3, 5, 7, 9 seconds
+            int index = i + 1;
 
-            // Take second screenshot after 3 seconds
-            timerSystem->SetTimeout(3.0, [this]() {
-                TakeScreenshot("screenshot_2.bmp");
-            });
+            timerSystem->SetTimeout(time, [this, index, numScreenshots]() {
+              std::string filename =
+                  "screenshot_" + std::to_string(index) + ".bmp";
+              TakeScreenshot(filename);
 
-            // Take third screenshot after 5 seconds and quit
-            timerSystem->SetTimeout(5.0, [this]() {
-                TakeScreenshot("screenshot_3.bmp");
-                TOYFRAMEV_LOG_INFO("Demo complete! Screenshots saved.");
-                Quit();
+              // After last screenshot, download ZIP (WebGL) or quit
+              if (index == numScreenshots) {
+                FinishDemo();
+              }
             });
+          }
 
-            TOYFRAMEV_LOG_INFO("Scheduled 3 screenshots at 1s, 3s, 5s");
+          TOYFRAMEV_LOG_INFO("Scheduled {} screenshots", numScreenshots);
         }
 
         return true;
@@ -120,17 +122,46 @@ private:
 
         // Read pixels from RenderTexture (synchronous)
         PixelData pixels = m_renderTexture->ReadPixels();
-        
+
+        TOYFRAMEV_LOG_INFO("ReadPixels returned: valid={}, size={}",
+                           pixels.IsValid(), pixels.data.size());
+
         if (pixels.IsValid()) {
             if (pixels.SaveToBMP(filename)) {
-                TOYFRAMEV_LOG_INFO("Saved screenshot: {} ({}x{})", 
-                    filename, pixels.width, pixels.height);
+              TOYFRAMEV_LOG_INFO("Screenshot queued/saved: {} ({}x{})",
+                                 filename, pixels.width, pixels.height);
             } else {
                 TOYFRAMEV_LOG_ERROR("Failed to save screenshot: {}", filename);
             }
         } else {
             TOYFRAMEV_LOG_ERROR("Failed to read pixels from RenderTexture");
         }
+    }
+
+    void FinishDemo() {
+      TOYFRAMEV_LOG_INFO("Demo complete!");
+
+#ifdef __EMSCRIPTEN__
+      // On WebGL, download all queued screenshots as a ZIP
+      size_t count = PixelData::GetPendingCount();
+      TOYFRAMEV_LOG_INFO("Pending images count: {}", count);
+      if (count > 0) {
+        TOYFRAMEV_LOG_INFO("Downloading {} screenshots as ZIP...", count);
+        PixelData::DownloadAllAsZip("screenshots.zip");
+      } else {
+        TOYFRAMEV_LOG_WARN("No screenshots queued for download!");
+      }
+#else
+      TOYFRAMEV_LOG_INFO("Screenshots saved to current directory.");
+#endif
+
+      // Request quit after a short delay to allow download to trigger
+      auto *timerSystem = GetSystem<TimerSystem>();
+      if (timerSystem) {
+        timerSystem->SetTimeout(0.5, [this]() { Quit(); });
+      } else {
+        Quit();
+      }
     }
 
     std::unique_ptr<RenderTexture> m_renderTexture;

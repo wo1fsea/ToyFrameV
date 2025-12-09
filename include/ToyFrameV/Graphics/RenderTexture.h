@@ -36,13 +36,40 @@ struct PixelData {
     PixelFormat format = PixelFormat::RGBA8;
     
     bool IsValid() const { return !data.empty() && width > 0 && height > 0; }
-    
+
     /**
-     * @brief Save to BMP file
+     * @brief Generate BMP data in memory
+     * @return BMP file data, empty if failed
+     */
+    std::vector<uint8_t> ToBMP() const;
+
+    /**
+     * @brief Save to BMP file (Desktop) or queue for ZIP download (WebGL)
      * @param filename Output file path
      * @return true on success
+     * @note On WebGL, call PixelData::DownloadAllAsZip() to download queued
+     * images
      */
     bool SaveToBMP(const std::string& filename) const;
+
+#ifdef __EMSCRIPTEN__
+    /**
+     * @brief Download all queued images as a single ZIP file (WebGL only)
+     * @param zipFilename Name of the ZIP file to download
+     */
+    static void
+    DownloadAllAsZip(const std::string &zipFilename = "screenshots.zip");
+
+    /**
+     * @brief Clear queued images without downloading (WebGL only)
+     */
+    static void ClearPending();
+
+    /**
+     * @brief Get number of queued images (WebGL only)
+     */
+    static size_t GetPendingCount();
+#endif
 };
 
 /**
