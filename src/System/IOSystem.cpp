@@ -1,27 +1,11 @@
 #include "ToyFrameV/IOSystem.h"
 #include "ToyFrameV/App.h"
-#include "ToyFrameV/Platform.h"
 #include "ToyFrameV/Core/Log.h"
+#include "ToyFrameV/Platform.h"
+#include "ToyFrameV/Platform/FileSystem.h"
 #include <cstring>
 #include <fstream>
 #include <sstream>
-
-#ifdef PLATFORM_WINDOWS
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <ShlObj.h>
-#include <Windows.h>
-#include <direct.h>
-#pragma comment(lib, "Shell32.lib")
-#endif
-
-#ifdef __EMSCRIPTEN__
-#include <emscripten/fetch.h>
-#endif
 
 namespace ToyFrameV {
 
@@ -64,13 +48,7 @@ bool IOSystem::Initialize(App *app) {
     System::Initialize(app);
     InitializePaths();
 
-#ifdef __EMSCRIPTEN__
-    m_networkAvailable = true;  // Web always has network
-#elif defined(PLATFORM_WINDOWS)
-    m_networkAvailable = true;  // TODO: Check actual network status
-#else
-    m_networkAvailable = true;
-#endif
+    m_networkAvailable = Platform::IsNetworkAvailable();
 
     TOYFRAMEV_LOG_DEBUG("IOSystem initialized");
     TOYFRAMEV_LOG_DEBUG("  Assets: {}", m_assetsPath);
@@ -86,50 +64,10 @@ void IOSystem::Update(float deltaTime) { ProcessPendingCallbacks(); }
 void IOSystem::Shutdown() { m_pendingCallbacks.clear(); }
 
 void IOSystem::InitializePaths() {
-#ifdef PLATFORM_WINDOWS
-    // Get executable directory for assets
-    char exePath[MAX_PATH];
-    GetModuleFileNameA(nullptr, exePath, MAX_PATH);
-    std::string exeDir(exePath);
-    size_t lastSlash = exeDir.find_last_of("\\/");
-    if (lastSlash != std::string::npos) {
-        exeDir = exeDir.substr(0, lastSlash);
-    }
-    m_assetsPath = exeDir + "\\assets";
-
-    // Get documents folder
-    char docPath[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, 0, docPath))) {
-        m_documentsPath = std::string(docPath) + "\\ToyFrameV";
-    } else {
-        m_documentsPath = exeDir + "\\documents";
-    }
-
-    // Cache and temp
-    char tempPath[MAX_PATH];
-    if (GetTempPathA(MAX_PATH, tempPath)) {
-        m_tempPath = std::string(tempPath) + "ToyFrameV";
-        m_cachePath = m_tempPath + "\\cache";
-    } else {
-        m_tempPath = exeDir + "\\temp";
-        m_cachePath = exeDir + "\\cache";
-    }
-
-#elif defined(__EMSCRIPTEN__)
-    m_assetsPath = "/assets";
-    m_documentsPath = "/home/web_user";
-    m_cachePath = "/tmp/cache";
-    m_tempPath = "/tmp";
-#else
-    // Default Unix-like paths
-    const char *home = getenv("HOME");
-    std::string homeDir = home ? home : ".";
-
-    m_assetsPath = "./assets";
-    m_documentsPath = homeDir + "/.toyframev/documents";
-    m_cachePath = homeDir + "/.toyframev/cache";
-    m_tempPath = "/tmp/toyframev";
-#endif
+  m_assetsPath = Platform::GetAssetsPath();
+  m_documentsPath = Platform::GetDocumentsPath();
+  m_cachePath = Platform::GetCachePath();
+  m_tempPath = Platform::GetTempDirectoryPath();
 }
 
 IOPathType IOSystem::DetectPathType(const std::string &path) const {
@@ -168,41 +106,17 @@ std::string IOSystem::ResolvePath(const std::string &path, IOPathType pathType) 
         pathType = DetectPathType(path);
     }
 
-    std::string cleanPath = StripScheme(path);
-
-    // Normalize path separators
-#ifdef PLATFORM_WINDOWS
-    for (char &c : cleanPath) {
-        if (c == '/')
-            c = '\\';
-    }
-#endif
+    std::string cleanPath = Platform::NormalizePath(StripScheme(path));
 
     switch (pathType) {
         case IOPathType::Assets:
-#ifdef PLATFORM_WINDOWS
-            return m_assetsPath + "\\" + cleanPath;
-#else
-            return m_assetsPath + "/" + cleanPath;
-#endif
+          return Platform::JoinPath(m_assetsPath, cleanPath);
         case IOPathType::Documents:
-#ifdef PLATFORM_WINDOWS
-            return m_documentsPath + "\\" + cleanPath;
-#else
-            return m_documentsPath + "/" + cleanPath;
-#endif
+          return Platform::JoinPath(m_documentsPath, cleanPath);
         case IOPathType::Cache:
-#ifdef PLATFORM_WINDOWS
-            return m_cachePath + "\\" + cleanPath;
-#else
-            return m_cachePath + "/" + cleanPath;
-#endif
+          return Platform::JoinPath(m_cachePath, cleanPath);
         case IOPathType::Temp:
-#ifdef PLATFORM_WINDOWS
-            return m_tempPath + "\\" + cleanPath;
-#else
-            return m_tempPath + "/" + cleanPath;
-#endif
+          return Platform::JoinPath(m_tempPath, cleanPath);
         case IOPathType::HTTP:
         case IOPathType::HTTPS:
             return path;  // Return URL as-is
@@ -224,15 +138,7 @@ bool IOSystem::EnsureDirectoryExists(const std::string &filePath) {
         return true;
     }
 
-#ifdef PLATFORM_WINDOWS
-    // Create directory recursively
-    // SHCreateDirectoryExA creates all intermediate directories
-    int result = SHCreateDirectoryExA(nullptr, dirPath.c_str(), nullptr);
-    return result == ERROR_SUCCESS || result == ERROR_ALREADY_EXISTS;
-#else
-    // TODO: Implement for other platforms using mkdir -p equivalent
-    return true;
-#endif
+    return Platform::EnsureDirectoryExists(dirPath);
 }
 
 IOResult IOSystem::ReadFile(const std::string &path, IOPathType pathType) {

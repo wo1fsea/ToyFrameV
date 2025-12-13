@@ -7,7 +7,8 @@ using namespace ToyFrameV;
 using namespace ToyFrameV::Core;
 
 namespace {
-#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+// Use PLATFORM_WEB macro from Platform.h for consistency
+#if defined(PLATFORM_WEB) && !defined(__EMSCRIPTEN_PTHREADS__)
 constexpr bool kWebNoThreads = true;
 #else
 constexpr bool kWebNoThreads = false;

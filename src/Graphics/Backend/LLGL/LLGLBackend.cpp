@@ -507,6 +507,25 @@ BackendPixelData LLGLBackend::ReadRenderTexturePixels(BackendHandle renderTextur
     auto* rtData = static_cast<LLGLRenderTextureData*>(renderTexture);
     if (!rtData->colorTexture || !rtData->renderSystem) return result;
 
+    // CRITICAL: For WebGL, we must ensure all GPU commands are submitted
+    // before reading the texture. End current render pass, submit commands,
+    // then restart the render pass.
+    bool wasInRenderPass = m_inRenderPass;
+    if (wasInRenderPass) {
+      EndCurrentRenderPass();
+    }
+
+    // Submit pending commands to GPU
+    m_commandBuffer->End();
+    m_commandQueue->Submit(*m_commandBuffer);
+    m_commandQueue->WaitIdle(); // Wait for GPU to finish
+
+    // Restart command buffer for any subsequent rendering
+    m_commandBuffer->Begin();
+    if (wasInRenderPass) {
+      BeginRenderPassToCurrentTarget();
+    }
+
     result.width = rtData->width;
     result.height = rtData->height;
     result.format = rtData->format;

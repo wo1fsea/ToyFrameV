@@ -50,24 +50,33 @@ struct PixelData {
      */
     bool SaveToBMP(const std::string& filename) const;
 
-#ifdef __EMSCRIPTEN__
     /**
-     * @brief Download all queued images as a single ZIP file (WebGL only)
+     * @brief Download all queued images as a single ZIP file
      * @param zipFilename Name of the ZIP file to download
+     * @note On Desktop: No-op (files are already saved to filesystem)
+     * @note On WebGL: Creates ZIP from queued files and triggers download
      */
     static void
     DownloadAllAsZip(const std::string &zipFilename = "screenshots.zip");
 
     /**
-     * @brief Clear queued images without downloading (WebGL only)
+     * @brief Clear queued images without downloading
+     * @note On Desktop: No-op
+     * @note On WebGL: Clears the pending file queue
      */
     static void ClearPending();
 
     /**
-     * @brief Get number of queued images (WebGL only)
+     * @brief Get number of queued images
+     * @return Number of queued images (always 0 on Desktop)
      */
     static size_t GetPendingCount();
-#endif
+
+    /**
+     * @brief Check if the platform uses queued downloads
+     * @return true on WebGL, false on Desktop
+     */
+    static bool UsesQueuedDownload();
 };
 
 /**
