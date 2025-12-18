@@ -219,6 +219,14 @@ void Graphics::SetVertexBuffer(Buffer* buffer) {
   m_impl->backend->SetVertexBuffer(buffer->GetHandle());
 }
 
+void Graphics::SetTexture(uint32_t slot, Texture* texture) {
+  m_impl->backend->SetTexture(slot, texture ? texture->GetHandle() : nullptr);
+}
+
+void Graphics::SetSampler(uint32_t slot, Sampler* sampler) {
+  m_impl->backend->SetSampler(slot, sampler ? sampler->GetHandle() : nullptr);
+}
+
 void Graphics::Draw(uint32_t vertexCount, uint32_t firstVertex) {
   m_impl->backend->Draw(vertexCount, firstVertex);
 }
@@ -279,6 +287,77 @@ void Graphics::ProcessReadbacks() {
     // Process async readback callbacks
     // For now, this is a stub - async readback will be implemented
     // when we add proper fence/query support
+}
+
+// ============================================================================
+// Texture Support
+// ============================================================================
+
+std::unique_ptr<Texture> Graphics::CreateTexture(const TextureDesc& desc) {
+    BackendTextureDesc backendDesc;
+    backendDesc.width = desc.width;
+    backendDesc.height = desc.height;
+    backendDesc.format = desc.format;
+    backendDesc.generateMipmaps = desc.generateMipmaps;
+    backendDesc.initialData = desc.initialData;
+    backendDesc.dataSize = desc.dataSize;
+
+    BackendHandle handle = m_impl->backend->CreateTexture(backendDesc);
+    if (!handle) {
+        return nullptr;
+    }
+
+    auto texture = std::unique_ptr<Texture>(new Texture());
+    texture->m_handle = handle;
+    texture->m_graphics = this;
+    texture->m_width = desc.width;
+    texture->m_height = desc.height;
+    texture->m_format = desc.format;
+    texture->m_hasMipmaps = desc.generateMipmaps;
+    return texture;
+}
+
+std::unique_ptr<Sampler> Graphics::CreateSampler(const SamplerDesc& desc) {
+    BackendSamplerDesc backendDesc;
+    backendDesc.minFilter = static_cast<BackendTextureFilter>(desc.minFilter);
+    backendDesc.magFilter = static_cast<BackendTextureFilter>(desc.magFilter);
+    backendDesc.mipFilter = static_cast<BackendTextureFilter>(desc.mipFilter);
+    backendDesc.addressU = static_cast<BackendTextureAddressMode>(desc.addressU);
+    backendDesc.addressV = static_cast<BackendTextureAddressMode>(desc.addressV);
+    backendDesc.addressW = static_cast<BackendTextureAddressMode>(desc.addressW);
+    backendDesc.mipLODBias = desc.mipLODBias;
+    backendDesc.maxAnisotropy = desc.maxAnisotropy;
+    backendDesc.borderColor[0] = desc.borderColor[0];
+    backendDesc.borderColor[1] = desc.borderColor[1];
+    backendDesc.borderColor[2] = desc.borderColor[2];
+    backendDesc.borderColor[3] = desc.borderColor[3];
+
+    BackendHandle handle = m_impl->backend->CreateSampler(backendDesc);
+    if (!handle) {
+        return nullptr;
+    }
+
+    auto sampler = std::unique_ptr<Sampler>(new Sampler());
+    sampler->m_handle = handle;
+    sampler->m_graphics = this;
+    return sampler;
+}
+
+std::unique_ptr<Texture> Graphics::CreateTextureFromImage(const ImageData& image, bool generateMipmaps) {
+    if (!image.IsValid()) {
+        TOYFRAMEV_LOG_ERROR("Invalid image data");
+        return nullptr;
+    }
+
+    TextureDesc desc;
+    desc.width = image.width;
+    desc.height = image.height;
+    desc.format = image.GetFormat();
+    desc.generateMipmaps = generateMipmaps;
+    desc.initialData = image.pixels.data();
+    desc.dataSize = image.pixels.size();
+
+    return CreateTexture(desc);
 }
 
 // ============================================================================

@@ -78,4 +78,28 @@ inline const char* GetLLGLModuleName(BackendConfig::API api) {
     }
 }
 
+/**
+ * @brief Convert BackendTextureFilter to LLGL SamplerFilter
+ */
+inline LLGL::SamplerFilter ToLLGLFilter(BackendTextureFilter filter) {
+    switch (filter) {
+        case BackendTextureFilter::Nearest: return LLGL::SamplerFilter::Nearest;
+        case BackendTextureFilter::Linear:  return LLGL::SamplerFilter::Linear;
+        default:                            return LLGL::SamplerFilter::Linear;
+    }
+}
+
+/**
+ * @brief Convert BackendTextureAddressMode to LLGL SamplerAddressMode
+ */
+inline LLGL::SamplerAddressMode ToLLGLAddressMode(BackendTextureAddressMode mode) {
+    switch (mode) {
+        case BackendTextureAddressMode::Repeat:  return LLGL::SamplerAddressMode::Repeat;
+        case BackendTextureAddressMode::Mirror:  return LLGL::SamplerAddressMode::Mirror;
+        case BackendTextureAddressMode::Clamp:   return LLGL::SamplerAddressMode::Clamp;
+        case BackendTextureAddressMode::Border:  return LLGL::SamplerAddressMode::Border;
+        default:                                 return LLGL::SamplerAddressMode::Repeat;
+    }
+}
+
 } // namespace ToyFrameV
