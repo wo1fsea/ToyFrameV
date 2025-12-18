@@ -50,6 +50,42 @@ inline LLGL::Format ToLLGLPixelFormat(PixelFormat format) {
 }
 
 /**
+ * @brief Convert ToyFrameV PixelFormat to LLGL ImageFormat for texture upload
+ */
+inline LLGL::ImageFormat ToLLGLImageFormat(PixelFormat format) {
+    switch (format) {
+        case PixelFormat::RGBA8:            return LLGL::ImageFormat::RGBA;
+        case PixelFormat::BGRA8:            return LLGL::ImageFormat::BGRA;
+        case PixelFormat::RGB8:             return LLGL::ImageFormat::RGB;
+        case PixelFormat::R8:               return LLGL::ImageFormat::R;
+        case PixelFormat::RG8:              return LLGL::ImageFormat::RG;
+        case PixelFormat::RGBA16F:          return LLGL::ImageFormat::RGBA;
+        case PixelFormat::RGBA32F:          return LLGL::ImageFormat::RGBA;
+        default:                            return LLGL::ImageFormat::RGBA;
+    }
+}
+
+/**
+ * @brief Get LLGL DataType for a PixelFormat
+ */
+inline LLGL::DataType ToLLGLDataType(PixelFormat format) {
+    switch (format) {
+        case PixelFormat::RGBA8:
+        case PixelFormat::BGRA8:
+        case PixelFormat::RGB8:
+        case PixelFormat::R8:
+        case PixelFormat::RG8:
+            return LLGL::DataType::UInt8;
+        case PixelFormat::RGBA16F:
+            return LLGL::DataType::Float16;
+        case PixelFormat::RGBA32F:
+            return LLGL::DataType::Float32;
+        default:
+            return LLGL::DataType::UInt8;
+    }
+}
+
+/**
  * @brief Convert ToyFrameV Topology to LLGL PrimitiveTopology
  */
 inline LLGL::PrimitiveTopology ToLLGLTopology(Topology topology) {

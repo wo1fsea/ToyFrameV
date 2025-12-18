@@ -5,10 +5,11 @@
 
 #include "ToyFrameV/Graphics/Texture.h"
 #include "ToyFrameV/Core/Log.h"
+#include <cstdio>
+#include <cstring>
 
 // stb_image implementation
 #define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_STDIO  // We handle file I/O ourselves
 #include "stb/stb_image.h"
 
 namespace ToyFrameV {
@@ -50,23 +51,31 @@ ImageData ImageData::LoadFromFile(const std::string& path) {
         return result;
     }
 
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    // Get file size using fseeko/ftello for large file support
+#if defined(_WIN32)
+    _fseeki64(file, 0, SEEK_END);
+    int64_t fileSize64 = _ftelli64(file);
+    _fseeki64(file, 0, SEEK_SET);
+#else
+    fseeko(file, 0, SEEK_END);
+    off_t fileSize64 = ftello(file);
+    fseeko(file, 0, SEEK_SET);
+#endif
 
-    if (fileSize <= 0) {
+    if (fileSize64 <= 0 || fileSize64 > static_cast<int64_t>(SIZE_MAX)) {
         fclose(file);
         TOYFRAMEV_LOG_ERROR("Invalid image file size: {}", path);
         return result;
     }
 
+    size_t fileSize = static_cast<size_t>(fileSize64);
+
     // Read file data
-    std::vector<uint8_t> fileData(static_cast<size_t>(fileSize));
-    size_t bytesRead = fread(fileData.data(), 1, static_cast<size_t>(fileSize), file);
+    std::vector<uint8_t> fileData(fileSize);
+    size_t bytesRead = fread(fileData.data(), 1, fileSize, file);
     fclose(file);
 
-    if (bytesRead != static_cast<size_t>(fileSize)) {
+    if (bytesRead != fileSize) {
         TOYFRAMEV_LOG_ERROR("Failed to read image file: {}", path);
         return result;
     }

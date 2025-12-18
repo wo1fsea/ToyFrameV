@@ -489,8 +489,8 @@ BackendHandle LLGLBackend::CreateTexture(const BackendTextureDesc& desc) {
     // Create initial data view if provided
     LLGL::ImageView initialData;
     if (desc.initialData && desc.dataSize > 0) {
-        initialData.format = LLGL::ImageFormat::RGBA;
-        initialData.dataType = LLGL::DataType::UInt8;
+        initialData.format = ToLLGLImageFormat(desc.format);
+        initialData.dataType = ToLLGLDataType(desc.format);
         initialData.data = desc.initialData;
         initialData.dataSize = desc.dataSize;
     }
