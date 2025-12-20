@@ -7,6 +7,7 @@ set(CORE_SOURCES
     Core/Log.cpp
     Graphics/Graphics.cpp
     Graphics/RenderTexture.cpp
+    Graphics/Texture.cpp
     Graphics/Backend/LLGL/LLGLBackend.cpp
     System/SystemManager.cpp
     System/WindowSystem.cpp
@@ -14,6 +15,7 @@ set(CORE_SOURCES
     System/InputSystem.cpp
     System/IOSystem.cpp
     System/TimerSystem.cpp
+    System/AssetSystem.cpp
 )
 
 # Platform-specific window and input sources

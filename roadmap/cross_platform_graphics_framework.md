@@ -37,6 +37,7 @@ ToyFrameV/
 │   │   ├── Buffer.h            # Buffer class
 │   │   ├── Shader.h            # Shader class
 │   │   ├── Pipeline.h          # Pipeline class
+│   │   ├── Texture.h           # Texture and Sampler classes
 │   │   ├── RenderTexture.h     # Offscreen render target
 │   │   └── Context.h           # Graphics main class
 │   ├── Platform.h              # Platform abstraction
@@ -46,6 +47,7 @@ ToyFrameV/
 │   ├── InputSystem.h           # Input subsystem
 │   ├── IOSystem.h              # I/O subsystem (file/network)
 │   ├── TimerSystem.h           # Timer subsystem
+│   ├── AssetSystem.h           # Asset loading/caching subsystem
 │   └── Core/                   # Core utilities
 │       ├── Log.h               # Logging API
 │       └── Threading.h         # ThreadPool/Future and sync primitives
@@ -58,6 +60,7 @@ ToyFrameV/
 │   ├── Input/InputWindows.cpp
 │   ├── Graphics/               # Graphics implementations
 │   │   ├── Graphics.cpp        # LLGL renderer wrapper
+│   │   ├── Texture.cpp         # Texture loading (stb_image)
 │   │   └── RenderTexture.cpp   # Offscreen render target
 │   ├── System/                 # System implementations
 │   │   ├── SystemManager.cpp   # System lifecycle management
@@ -65,7 +68,8 @@ ToyFrameV/
 │   │   ├── GraphicsSystem.cpp
 │   │   ├── InputSystem.cpp
 │   │   ├── IOSystem.cpp        # I/O system implementation
-│   │   └── TimerSystem.cpp     # Timer system implementation
+│   │   ├── TimerSystem.cpp     # Timer system implementation
+│   │   └── AssetSystem.cpp     # Asset system implementation
 │   └── Platform/
 │       ├── Windows/PlatformWindows.cpp
 │       └── Web/PlatformWeb.cpp
@@ -75,8 +79,11 @@ ToyFrameV/
 │   ├── HelloIO/                # I/O system sample
 │   ├── HelloThreadLog/         # ThreadPool + Log sample
 │   ├── HelloTimer/             # Timer system sample
-│   └── HelloRenderTexture/     # Offscreen rendering sample
-├── third_party/fmt/core.h      # Minimal header-only fmt-style formatter
+│   ├── HelloRenderTexture/     # Offscreen rendering sample
+│   └── HelloTexture/           # Texture loading sample
+├── third_party/
+│   ├── fmt/core.h              # Minimal header-only fmt-style formatter
+│   └── stb/stb_image.h         # Image loading library
 ├── web/template.html           # Web build template
 └── docs/WebGL_Build.md         # Web build documentation
 ```
@@ -310,10 +317,17 @@ src/System/ConsoleSystem.cpp
   - [x] Split `Graphics.h` into `Graphics/` subdirectory
   - [x] `Types.h`, `Buffer.h`, `Shader.h`, `Pipeline.h`, `RenderTexture.h`, `Context.h`
   - [x] Aggregate `Graphics.h` includes all submodules
-- [ ] **Texture System**
-  - [ ] Texture loading (PNG/JPG)
-  - [ ] Texture samplers
-  - [ ] Textured quad rendering
+- [x] **Asset System** (`AssetSystem.h`, `AssetSystem.cpp`)
+  - [x] Asset loading with caching
+  - [x] Sync/Async texture loading API
+  - [x] Integration with IOSystem for path resolution
+  - [x] Image loading via stb_image (PNG, JPG, BMP, etc.)
+- [x] **Texture System** (`Graphics/Texture.h`, `Texture.cpp`)
+  - [x] Texture creation from raw pixel data
+  - [x] Texture loading from image files (PNG/JPG)
+  - [x] Texture samplers with filtering options
+  - [x] `SetTexture()` / `SetSampler()` API
+  - [x] `HelloTexture` sample with textured quad rendering
 - [ ] **Uniform Buffers**
   - [ ] MVP matrix passing
   - [ ] Global parameters (time, resolution, etc.)
@@ -350,6 +364,8 @@ src/System/ConsoleSystem.cpp
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 10   │ IOSystem       │ File/Network I/O          │
 ├─────────────────────────────────────────────────────────────┤
+│  Priority 20   │ AssetSystem    │ Asset loading/caching     │
+├─────────────────────────────────────────────────────────────┤
 │  Priority 50   │ TimerSystem    │ Timed callbacks           │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 100  │ InputSystem    │ Input state updates       │
@@ -376,6 +392,7 @@ src/System/ConsoleSystem.cpp
 ├─────────────────────────────────────────────────────────────┤
 │  Systems (Frame-driven, stateful, lifecycle-managed)        │
 │  ├── WindowSystem, InputSystem, GraphicsSystem, IOSystem   │
+│  ├── AssetSystem, TimerSystem                              │
 │  └── ConsoleSystem, AudioSystem, PhysicsSystem (future)    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -446,4 +463,4 @@ Build outputs are located in `build-web/bin/`. Use a local HTTP server to run th
 
 ---
 
-*Last updated: December 9, 2025*
+*Last updated: December 18, 2025*

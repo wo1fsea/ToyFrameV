@@ -105,6 +105,51 @@ struct BackendRenderTextureDesc {
 };
 
 /**
+ * @brief Texture creation descriptor
+ */
+struct BackendTextureDesc {
+    uint32_t width = 0;
+    uint32_t height = 0;
+    PixelFormat format = PixelFormat::RGBA8;
+    bool generateMipmaps = false;
+    const void* initialData = nullptr;
+    size_t dataSize = 0;
+};
+
+/**
+ * @brief Texture filter mode
+ */
+enum class BackendTextureFilter {
+    Nearest,
+    Linear
+};
+
+/**
+ * @brief Texture address mode
+ */
+enum class BackendTextureAddressMode {
+    Repeat,
+    Mirror,
+    Clamp,
+    Border
+};
+
+/**
+ * @brief Sampler creation descriptor
+ */
+struct BackendSamplerDesc {
+    BackendTextureFilter minFilter = BackendTextureFilter::Linear;
+    BackendTextureFilter magFilter = BackendTextureFilter::Linear;
+    BackendTextureFilter mipFilter = BackendTextureFilter::Linear;
+    BackendTextureAddressMode addressU = BackendTextureAddressMode::Repeat;
+    BackendTextureAddressMode addressV = BackendTextureAddressMode::Repeat;
+    BackendTextureAddressMode addressW = BackendTextureAddressMode::Repeat;
+    float mipLODBias = 0.0f;
+    uint32_t maxAnisotropy = 1;
+    float borderColor[4] = {0, 0, 0, 0};
+};
+
+/**
  * @brief Pixel data container for readback operations
  */
 struct BackendPixelData {
@@ -235,6 +280,28 @@ public:
      */
     virtual bool ResizeRenderTexture(BackendHandle renderTexture, uint32_t width, uint32_t height) = 0;
 
+    /**
+     * @brief Create a texture
+     * @return Handle to the created texture, or nullptr on failure
+     */
+    virtual BackendHandle CreateTexture(const BackendTextureDesc& desc) = 0;
+
+    /**
+     * @brief Destroy a texture
+     */
+    virtual void DestroyTexture(BackendHandle texture) = 0;
+
+    /**
+     * @brief Create a sampler
+     * @return Handle to the created sampler, or nullptr on failure
+     */
+    virtual BackendHandle CreateSampler(const BackendSamplerDesc& desc) = 0;
+
+    /**
+     * @brief Destroy a sampler
+     */
+    virtual void DestroySampler(BackendHandle sampler) = 0;
+
     // ==================== Render State ====================
 
     /**
@@ -252,6 +319,20 @@ public:
      * @param renderTexture Render texture handle, or nullptr for screen
      */
     virtual void SetRenderTarget(BackendHandle renderTexture) = 0;
+
+    /**
+     * @brief Set a texture at the specified slot
+     * @param slot Texture slot index (0-based)
+     * @param texture Texture handle, or nullptr to unbind
+     */
+    virtual void SetTexture(uint32_t slot, BackendHandle texture) = 0;
+
+    /**
+     * @brief Set a sampler at the specified slot
+     * @param slot Sampler slot index (0-based)
+     * @param sampler Sampler handle, or nullptr to use default
+     */
+    virtual void SetSampler(uint32_t slot, BackendHandle sampler) = 0;
 
     // ==================== Drawing ====================
 

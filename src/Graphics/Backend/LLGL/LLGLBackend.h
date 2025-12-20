@@ -55,11 +55,17 @@ public:
     BackendHandle CreateRenderTexture(const BackendRenderTextureDesc& desc) override;
     void DestroyRenderTexture(BackendHandle renderTexture) override;
     bool ResizeRenderTexture(BackendHandle renderTexture, uint32_t width, uint32_t height) override;
+    BackendHandle CreateTexture(const BackendTextureDesc& desc) override;
+    void DestroyTexture(BackendHandle texture) override;
+    BackendHandle CreateSampler(const BackendSamplerDesc& desc) override;
+    void DestroySampler(BackendHandle sampler) override;
 
     // ==================== Render State ====================
     void SetPipeline(BackendHandle pipeline) override;
     void SetVertexBuffer(BackendHandle buffer) override;
     void SetRenderTarget(BackendHandle renderTexture) override;
+    void SetTexture(uint32_t slot, BackendHandle texture) override;
+    void SetSampler(uint32_t slot, BackendHandle sampler) override;
 
     // ==================== Drawing ====================
     void Draw(uint32_t vertexCount, uint32_t firstVertex) override;

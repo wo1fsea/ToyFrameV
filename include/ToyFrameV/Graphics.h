@@ -13,4 +13,5 @@
 #include "ToyFrameV/Graphics/Shader.h"
 #include "ToyFrameV/Graphics/Pipeline.h"
 #include "ToyFrameV/Graphics/RenderTexture.h"
+#include "ToyFrameV/Graphics/Texture.h"
 #include "ToyFrameV/Graphics/Context.h"

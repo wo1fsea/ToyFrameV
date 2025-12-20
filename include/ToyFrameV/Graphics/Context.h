@@ -10,6 +10,7 @@
 #include "ToyFrameV/Graphics/Shader.h"
 #include "ToyFrameV/Graphics/Pipeline.h"
 #include "ToyFrameV/Graphics/RenderTexture.h"
+#include "ToyFrameV/Graphics/Texture.h"
 #include "ToyFrameV/Platform.h"
 #include <memory>
 #include <string>
@@ -98,6 +99,24 @@ public:
      */
     std::unique_ptr<RenderTexture> CreateRenderTexture(const RenderTextureDesc& desc);
 
+    /**
+     * @brief Create a 2D texture
+     */
+    std::unique_ptr<Texture> CreateTexture(const TextureDesc& desc);
+
+    /**
+     * @brief Create a texture sampler
+     */
+    std::unique_ptr<Sampler> CreateSampler(const SamplerDesc& desc);
+
+    /**
+     * @brief Create a texture from image data
+     * @param image Image data loaded from file
+     * @param generateMipmaps Whether to generate mipmaps
+     * @return Texture, or nullptr on failure
+     */
+    std::unique_ptr<Texture> CreateTextureFromImage(const ImageData& image, bool generateMipmaps = false);
+
     // ==================== Render Target Management ====================
 
     /**
@@ -123,6 +142,20 @@ public:
      * @brief Set vertex buffer
      */
     void SetVertexBuffer(Buffer* buffer);
+
+    /**
+     * @brief Set a texture at the specified slot
+     * @param slot Texture slot index (0-based)
+     * @param texture Texture to bind, or nullptr to unbind
+     */
+    void SetTexture(uint32_t slot, Texture* texture);
+
+    /**
+     * @brief Set a sampler at the specified slot
+     * @param slot Sampler slot index (0-based)
+     * @param sampler Sampler to bind, or nullptr to use default
+     */
+    void SetSampler(uint32_t slot, Sampler* sampler);
 
     /**
      * @brief Draw primitives

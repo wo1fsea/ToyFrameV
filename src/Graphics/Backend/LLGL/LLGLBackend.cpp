@@ -468,6 +468,82 @@ bool LLGLBackend::ResizeRenderTexture(BackendHandle renderTexture, uint32_t widt
     return rtData->Create(renderSystem, width, height, format, hasDepth);
 }
 
+// ==================== Texture and Sampler ====================
+
+BackendHandle LLGLBackend::CreateTexture(const BackendTextureDesc& desc) {
+    if (desc.width == 0 || desc.height == 0) {
+        TOYFRAMEV_LOG_ERROR("Invalid texture dimensions: {}x{}", desc.width, desc.height);
+        return nullptr;
+    }
+
+    LLGL::TextureDescriptor texDesc;
+    texDesc.type = LLGL::TextureType::Texture2D;
+    texDesc.extent = { desc.width, desc.height, 1 };
+    texDesc.mipLevels = desc.generateMipmaps ? 0 : 1;  // 0 = auto-calculate mipmap count
+    texDesc.bindFlags = LLGL::BindFlags::Sampled;
+    if (desc.generateMipmaps) {
+        texDesc.miscFlags = LLGL::MiscFlags::GenerateMips;
+    }
+    texDesc.format = ToLLGLPixelFormat(desc.format);
+
+    // Create initial data view if provided
+    LLGL::ImageView initialData;
+    if (desc.initialData && desc.dataSize > 0) {
+        initialData.format = ToLLGLImageFormat(desc.format);
+        initialData.dataType = ToLLGLDataType(desc.format);
+        initialData.data = desc.initialData;
+        initialData.dataSize = desc.dataSize;
+    }
+
+    LLGL::Texture* texture = m_renderSystem->CreateTexture(
+        texDesc, 
+        (desc.initialData && desc.dataSize > 0) ? &initialData : nullptr
+    );
+
+    if (!texture) {
+        TOYFRAMEV_LOG_ERROR("Failed to create texture");
+        return nullptr;
+    }
+
+    return static_cast<BackendHandle>(texture);
+}
+
+void LLGLBackend::DestroyTexture(BackendHandle texture) {
+    if (texture && m_renderSystem) {
+        m_renderSystem->Release(*static_cast<LLGL::Texture*>(texture));
+    }
+}
+
+BackendHandle LLGLBackend::CreateSampler(const BackendSamplerDesc& desc) {
+    LLGL::SamplerDescriptor samplerDesc;
+    samplerDesc.minFilter = ToLLGLFilter(desc.minFilter);
+    samplerDesc.magFilter = ToLLGLFilter(desc.magFilter);
+    samplerDesc.mipMapFilter = ToLLGLFilter(desc.mipFilter);
+    samplerDesc.addressModeU = ToLLGLAddressMode(desc.addressU);
+    samplerDesc.addressModeV = ToLLGLAddressMode(desc.addressV);
+    samplerDesc.addressModeW = ToLLGLAddressMode(desc.addressW);
+    samplerDesc.mipMapLODBias = desc.mipLODBias;
+    samplerDesc.maxAnisotropy = desc.maxAnisotropy;
+    samplerDesc.borderColor[0] = desc.borderColor[0];
+    samplerDesc.borderColor[1] = desc.borderColor[1];
+    samplerDesc.borderColor[2] = desc.borderColor[2];
+    samplerDesc.borderColor[3] = desc.borderColor[3];
+
+    LLGL::Sampler* sampler = m_renderSystem->CreateSampler(samplerDesc);
+    if (!sampler) {
+        TOYFRAMEV_LOG_ERROR("Failed to create sampler");
+        return nullptr;
+    }
+
+    return static_cast<BackendHandle>(sampler);
+}
+
+void LLGLBackend::DestroySampler(BackendHandle sampler) {
+    if (sampler && m_renderSystem) {
+        m_renderSystem->Release(*static_cast<LLGL::Sampler*>(sampler));
+    }
+}
+
 // ==================== Render State ====================
 
 void LLGLBackend::SetPipeline(BackendHandle pipeline) {
@@ -486,6 +562,18 @@ void LLGLBackend::SetRenderTarget(BackendHandle renderTexture) {
     
     // Begin new render pass
     BeginRenderPassToCurrentTarget();
+}
+
+void LLGLBackend::SetTexture(uint32_t slot, BackendHandle texture) {
+    if (texture) {
+        m_commandBuffer->SetResource(slot, *static_cast<LLGL::Texture*>(texture));
+    }
+}
+
+void LLGLBackend::SetSampler(uint32_t slot, BackendHandle sampler) {
+    if (sampler) {
+        m_commandBuffer->SetResource(slot, *static_cast<LLGL::Sampler*>(sampler));
+    }
 }
 
 // ==================== Drawing ====================
