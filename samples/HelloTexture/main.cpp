@@ -170,10 +170,16 @@ class HelloTextureApp : public App {
             return false;
         }
 
-        // Create pipeline
+        // Create pipeline with resource bindings
         PipelineDesc pipelineDesc;
         pipelineDesc.shader = m_shader.get();
         pipelineDesc.topology = Topology::TriangleList;
+
+        // Specify resource bindings for pipeline layout
+        // Texture at slot 0, Sampler at slot 0 (HLSL uses t0, s0)
+        pipelineDesc.resourceBindings = {
+            {ResourceBindingType::Texture, 0, "colorTexture"},
+            {ResourceBindingType::Sampler, 0, "colorSampler"}};
 
         m_pipeline = gfx->CreatePipeline(pipelineDesc);
         if (!m_pipeline) {
@@ -219,8 +225,10 @@ class HelloTextureApp : public App {
         gfx->SetVertexBuffer(m_vertexBuffer.get());
 
         // Set texture and sampler
+        // Note: slot corresponds to PipelineLayout binding index, not HLSL
+        // register binding[0] = Texture, binding[1] = Sampler
         gfx->SetTexture(0, m_texture.get());
-        gfx->SetSampler(0, m_sampler.get());
+        gfx->SetSampler(1, m_sampler.get());
 
         // Draw quad (6 vertices, 2 triangles)
         gfx->Draw(6);

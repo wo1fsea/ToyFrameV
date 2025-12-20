@@ -81,6 +81,16 @@ struct BackendShaderDesc {
 };
 
 /**
+ * @brief Resource binding descriptor for pipeline layout
+ */
+struct BackendResourceBinding {
+  enum class Type { Texture, Sampler, ConstantBuffer };
+  Type type = Type::Texture;
+  uint32_t slot = 0; // Binding slot index
+  std::string name;  // Resource name in shader (optional, for OpenGL)
+};
+
+/**
  * @brief Pipeline creation descriptor
  */
 struct BackendPipelineDesc {
@@ -92,6 +102,9 @@ struct BackendPipelineDesc {
     bool depthTestEnabled = true;
     bool depthWriteEnabled = true;
     bool blendEnabled = false;
+
+    // Resource bindings for PipelineLayout
+    std::vector<BackendResourceBinding> resourceBindings;
 };
 
 /**

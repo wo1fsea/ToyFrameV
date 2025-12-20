@@ -200,6 +200,25 @@ std::unique_ptr<Pipeline> Graphics::CreatePipeline(const PipelineDesc& desc) {
     backendDesc.depthWriteEnabled = desc.depthWriteEnabled;
     backendDesc.blendEnabled = desc.blendEnabled;
 
+    // Convert resource bindings
+    for (const auto &binding : desc.resourceBindings) {
+      BackendResourceBinding backendBinding;
+      backendBinding.slot = binding.slot;
+      backendBinding.name = binding.name;
+      switch (binding.type) {
+      case ResourceBindingType::Texture:
+        backendBinding.type = BackendResourceBinding::Type::Texture;
+        break;
+      case ResourceBindingType::Sampler:
+        backendBinding.type = BackendResourceBinding::Type::Sampler;
+        break;
+      case ResourceBindingType::ConstantBuffer:
+        backendBinding.type = BackendResourceBinding::Type::ConstantBuffer;
+        break;
+      }
+      backendDesc.resourceBindings.push_back(backendBinding);
+    }
+
     BackendHandle handle = m_impl->backend->CreatePipeline(backendDesc);
     if (!handle) {
       return nullptr;

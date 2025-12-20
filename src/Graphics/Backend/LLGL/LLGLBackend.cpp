@@ -395,7 +395,45 @@ BackendHandle LLGLBackend::CreatePipeline(const BackendPipelineDesc& desc) {
         return nullptr;
     }
 
+    // Create PipelineLayout if resource bindings are specified
+    LLGL::PipelineLayout *pipelineLayout = nullptr;
+    if (!desc.resourceBindings.empty()) {
+      LLGL::PipelineLayoutDescriptor layoutDesc;
+
+      for (const auto &binding : desc.resourceBindings) {
+        LLGL::BindingDescriptor bindingDesc;
+        bindingDesc.slot.index = binding.slot;
+        bindingDesc.stageFlags = LLGL::StageFlags::FragmentStage;
+
+        if (!binding.name.empty()) {
+          bindingDesc.name = binding.name.c_str();
+        }
+
+        switch (binding.type) {
+        case BackendResourceBinding::Type::Texture:
+          bindingDesc.type = LLGL::ResourceType::Texture;
+          bindingDesc.bindFlags = LLGL::BindFlags::Sampled;
+          break;
+        case BackendResourceBinding::Type::Sampler:
+          bindingDesc.type = LLGL::ResourceType::Sampler;
+          bindingDesc.bindFlags = 0;
+          break;
+        case BackendResourceBinding::Type::ConstantBuffer:
+          bindingDesc.type = LLGL::ResourceType::Buffer;
+          bindingDesc.bindFlags = LLGL::BindFlags::ConstantBuffer;
+          bindingDesc.stageFlags =
+              LLGL::StageFlags::VertexStage | LLGL::StageFlags::FragmentStage;
+          break;
+        }
+
+        layoutDesc.bindings.push_back(bindingDesc);
+      }
+
+      pipelineLayout = m_renderSystem->CreatePipelineLayout(layoutDesc);
+    }
+
     LLGL::GraphicsPipelineDescriptor pipelineDesc;
+    pipelineDesc.pipelineLayout = pipelineLayout;
     pipelineDesc.vertexShader = static_cast<LLGL::Shader*>(desc.vertexShader);
     pipelineDesc.fragmentShader = static_cast<LLGL::Shader*>(desc.fragmentShader);
     pipelineDesc.renderPass = m_swapChain->GetRenderPass();
@@ -420,8 +458,16 @@ BackendHandle LLGLBackend::CreatePipeline(const BackendPipelineDesc& desc) {
     if (const auto* report = pipelineState->GetReport()) {
         if (report->HasErrors()) {
             TOYFRAMEV_LOG_ERROR("Pipeline error: {}", report->GetText());
+            if (pipelineLayout) {
+              m_renderSystem->Release(*pipelineLayout);
+            }
             return nullptr;
         }
+    }
+
+    // Store PipelineLayout association for cleanup
+    if (pipelineLayout) {
+      m_pipelineLayouts.push_back({pipelineState, pipelineLayout});
     }
 
     return static_cast<BackendHandle>(pipelineState);
@@ -429,7 +475,19 @@ BackendHandle LLGLBackend::CreatePipeline(const BackendPipelineDesc& desc) {
 
 void LLGLBackend::DestroyPipeline(BackendHandle pipeline) {
     if (pipeline && m_renderSystem) {
-        m_renderSystem->Release(*static_cast<LLGL::PipelineState*>(pipeline));
+      auto *pipelineState = static_cast<LLGL::PipelineState *>(pipeline);
+
+      // Find and release associated PipelineLayout
+      auto it = std::find_if(m_pipelineLayouts.begin(), m_pipelineLayouts.end(),
+                             [pipelineState](const auto &pair) {
+                               return pair.first == pipelineState;
+                             });
+      if (it != m_pipelineLayouts.end()) {
+        m_renderSystem->Release(*it->second);
+        m_pipelineLayouts.erase(it);
+      }
+
+      m_renderSystem->Release(*pipelineState);
     }
 }
 

@@ -114,6 +114,10 @@ private:
     // Info strings
     std::string m_backendName;
     std::string m_deviceName;
+
+    // Pipeline-PipelineLayout mapping (PipelineLayout must be kept alive)
+    std::vector<std::pair<LLGL::PipelineState *, LLGL::PipelineLayout *>>
+        m_pipelineLayouts;
 };
 
 /**

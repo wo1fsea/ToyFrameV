@@ -6,11 +6,27 @@
  */
 
 #include "ToyFrameV/Graphics/Types.h"
+#include <string>
+#include <vector>
 
 namespace ToyFrameV {
 
 class Graphics;
 class Shader;
+
+/**
+ * @brief Resource binding type for pipeline layout
+ */
+enum class ResourceBindingType { Texture, Sampler, ConstantBuffer };
+
+/**
+ * @brief Resource binding descriptor
+ */
+struct ResourceBinding {
+  ResourceBindingType type = ResourceBindingType::Texture;
+  uint32_t slot = 0; ///< Binding slot index
+  std::string name;  ///< Resource name in shader (required for OpenGL)
+};
 
 /**
  * @brief Pipeline description
@@ -23,6 +39,9 @@ struct PipelineDesc {
     bool depthTestEnabled = false;
     bool depthWriteEnabled = false;
     bool blendEnabled = false;
+
+    /// Resource bindings for textures, samplers, constant buffers
+    std::vector<ResourceBinding> resourceBindings;
 };
 
 /**
