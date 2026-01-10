@@ -5,8 +5,8 @@
 ToyFrameV is a lightweight cross-platform graphics framework based on LLGL, supporting Desktop and Web platforms.
 
 ## ✅ Target Platforms
-- **Desktop**: Windows ✅ | macOS (Planned) | Linux (Planned)
-- **Mobile**: iOS (Planned) | Android (Planned)
+- **Desktop**: Windows ✅ | macOS (Planned) | Linux ✅
+- **Mobile**: iOS (Planned) | Android (In Progress)
 - **Web**: WebAssembly + WebGL ✅
 
 ## 🔧 Tech Stack
@@ -80,7 +80,8 @@ ToyFrameV/
 │   ├── HelloThreadLog/         # ThreadPool + Log sample
 │   ├── HelloTimer/             # Timer system sample
 │   ├── HelloRenderTexture/     # Offscreen rendering sample
-│   └── HelloTexture/           # Texture loading sample
+│   ├── HelloTexture/           # Texture loading sample
+│   └── HelloRenderGraph/       # RenderGraph multi-pass rendering sample
 ├── third_party/
 │   ├── fmt/core.h              # Minimal header-only fmt-style formatter
 │   └── stb/stb_image.h         # Image loading library
@@ -300,10 +301,12 @@ src/System/ConsoleSystem.cpp
   - [ ] Metal backend testing
   - [ ] Cocoa window creation
   - [ ] Input event handling
-- [ ] **Linux Support**
-  - [ ] Vulkan/OpenGL backend
-  - [ ] X11/Wayland window
-  - [ ] Input event handling
+- [x] **Linux Support**
+  - [x] OpenGL backend
+  - [x] X11 window
+  - [x] Input event handling
+  - [x] Platform-specific implementations (PlatformLinux.cpp, WindowLinux.cpp, InputLinux.cpp)
+  - [x] Unix file system support (FileSystemUnix.cpp)
 
 ### 📋 Stage 11: Feature Enhancement (In Progress)
 - [x] **RenderTexture System** (`Graphics/RenderTexture.h`, `RenderTexture.cpp`)
@@ -313,6 +316,10 @@ src/System/ConsoleSystem.cpp
   - [x] Async readback API (`ReadPixelsAsync()`) for WebGL
   - [x] BMP file export (`SaveToBMP()`)
   - [x] `HelloRenderTexture` sample
+- [x] **RenderGraph Pipeline** (`RenderGraph.h`, `RenderGraphSystem.cpp`)
+  - [x] Main render target and Present pass
+  - [x] Unified capture path from main RT
+  - [x] `HelloRenderGraph` sample with multi-pass rendering and post-processing
 - [x] **Graphics Module Refactor**
   - [x] Split `Graphics.h` into `Graphics/` subdirectory
   - [x] `Types.h`, `Buffer.h`, `Shader.h`, `Pipeline.h`, `RenderTexture.h`, `Context.h`
@@ -379,6 +386,8 @@ src/System/ConsoleSystem.cpp
 │  Priority 900  │ (PreRender)    │ Render preparations       │
 ├─────────────────────────────────────────────────────────────┤
 │  Priority 1000 │ GraphicsSystem │ Frame present/swap        │
+
+│  Priority 1010 │ RenderGraphSystem │ RenderGraph execution/present        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -391,7 +400,7 @@ src/System/ConsoleSystem.cpp
 │  └── (Future)   │ Memory allocators, Math library          │
 ├─────────────────────────────────────────────────────────────┤
 │  Systems (Frame-driven, stateful, lifecycle-managed)        │
-│  ├── WindowSystem, InputSystem, GraphicsSystem, IOSystem   │
+│  ├── WindowSystem, InputSystem, GraphicsSystem, RenderGraphSystem, IOSystem   │
 │  ├── AssetSystem, TimerSystem                              │
 │  └── ConsoleSystem, AudioSystem, PhysicsSystem (future)    │
 └─────────────────────────────────────────────────────────────┘
@@ -409,7 +418,7 @@ Update (ascending priority)
          ↓
 Render
     ├── GraphicsSystem: BeginFrame()
-    └── OnRender()
+    RenderGraphSystem: Execute RenderGraph
          ↓
 PostUpdate (ascending priority)
     ├── GraphicsSystem: EndFrame/Present
@@ -463,4 +472,16 @@ Build outputs are located in `build-web/bin/`. Use a local HTTP server to run th
 
 ---
 
-*Last updated: December 18, 2025*
+*Last updated: January 11, 2026*
+
+
+
+
+
+
+
+
+
+
+
+
